@@ -1,1 +1,32 @@
-site_name: My Docs
+# 站点名称
+site_name: 'R-CNN'
+# 仓库链接
+repo_url: https://github.com/zjZSTU/R-CNN.git
+# 作者
+site_author: 'zhujian'
+# 版权信息
+copyright: '2020, zhujian'
+# 源文件目录
+docs_dir: 'docs'
+# 生成静态文件目录
+site_dir: 'site'
+# 额外信息
+extra:
+    # 版本号
+    version: 0.1.0
+# 主题
+theme: 
+    # name: 'readthedocs'
+    # name: 'mkdocs'
+    name: 'material'
+# markdown扩展
+markdown_extensions:
+    - toc:
+        permalink: true
+    - pymdownx.arithmatex
+
+extra_javascript:
+    - 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML'
+# 导航
+nav:
+    - Home: index.md
