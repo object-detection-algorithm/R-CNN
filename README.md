@@ -4,7 +4,7 @@
 
 > `R-CNN`算法实现
 
-学习论文[Rich feature hierarchies for accurate object detection and semantic segmentation](https://arxiv.org/abs/1311.2524)，实现`R-CNN`算法
+学习论文[Rich feature hierarchies for accurate object detection and semantic segmentation](https://arxiv.org/abs/1311.2524)，实现`R-CNN`算法，完成目标检测器的训练和使用
 
 ## 内容列表
 
@@ -17,7 +17,7 @@
 
 ## 背景
 
-`R-CNN`是最早实现的深度学习检测算法，其结合了选择性搜索算法和卷积神经网络。复现`R-CNN`算法，也有利于后续算法的研究和学习
+`R-CNN(Region-CNN)`是最早实现的深度学习检测算法，其结合了选择性搜索算法和卷积神经网络。复现`R-CNN`算法，也有利于后续算法的研究和学习
 
 ## 安装
 
