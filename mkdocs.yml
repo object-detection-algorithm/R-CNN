@@ -30,3 +30,5 @@ extra_javascript:
 # 导航
 nav:
     - Home: index.md
+    - '数据集':
+        - '创建': './create_data.md'
