@@ -34,9 +34,14 @@ def check_dir(data_dir):
         os.mkdir(data_dir)
 
 
-def save_samples(sample_list):
-    sample_root = './data/car'
-    check_dir(sample_root)
+def save_car_samples(sample_list):
+    car_root = './data/car'
+    car_annotation = os.path.join(car_root, 'Annotations')
+    car_jpeg = os.path.join(car_root, 'JPEGImages')
+
+    check_dir(car_root)
+    check_dir(car_annotation)
+    check_dir(car_jpeg)
 
     annotation_dir = './data/VOCdevkit/VOC2007/Annotations'
     jpeg_dir = './data/VOCdevkit/VOC2007/JPEGImages'
@@ -46,12 +51,15 @@ def save_samples(sample_list):
 
     for sample_name in sample_list:
         src_annotation_path = os.path.join(annotation_dir, sample_name + suffix_xml)
-        dst_annotation_path = os.path.join(sample_root, sample_name + suffix_xml)
+        dst_annotation_path = os.path.join(car_annotation, sample_name + suffix_xml)
         shutil.copyfile(src_annotation_path, dst_annotation_path)
 
         src_jpeg_path = os.path.join(jpeg_dir, sample_name + suffix_jpeg)
-        dst_jpeg_path = os.path.join(sample_root, sample_name + suffix_jpeg)
+        dst_jpeg_path = os.path.join(car_jpeg, sample_name + suffix_jpeg)
         shutil.copyfile(src_jpeg_path, dst_jpeg_path)
+
+    csv_path = os.path.join(car_root, 'car.csv')
+    np.savetxt(csv_path, np.array(sample_list), fmt='%s')
 
     print('done')
 
@@ -60,4 +68,4 @@ if __name__ == '__main__':
     car_samples = parse_trainval()
     print(car_samples)
 
-    save_samples(car_samples)
+    save_car_samples(car_samples)
