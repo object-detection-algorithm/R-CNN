@@ -30,5 +30,6 @@ extra_javascript:
 # 导航
 nav:
     - Home: index.md
+    - '算法解析': './算法解析.md'
     - '数据集':
         - '创建': './create_data.md'
