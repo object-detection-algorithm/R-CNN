@@ -2,7 +2,7 @@
 
 """
 @author: zj
-@file:   create_data.py
+@file:   create_voc_dataset.py
 @time:   2020-02-24
 """
 

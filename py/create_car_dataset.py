@@ -2,7 +2,7 @@
 
 """
 @author: zj
-@file:   extract_image.py
+@file:   create_car_dataset.py
 @time:   2020-02-24
 """
 
