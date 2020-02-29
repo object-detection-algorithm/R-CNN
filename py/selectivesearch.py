@@ -15,7 +15,7 @@ def get_selective_search():
     return gs
 
 
-def pretreat(gs, img, strategy='q'):
+def config(gs, img, strategy='q'):
     gs.setBaseImage(img)
 
     if (strategy == 's'):
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     gs = get_selective_search()
 
     img = cv2.imread('./data/lena.jpg', cv2.IMREAD_COLOR)
-    pretreat(gs, img, strategy='q')
+    config(gs, img, strategy='q')
 
     rects = get_rects(gs)
     print(rects)
