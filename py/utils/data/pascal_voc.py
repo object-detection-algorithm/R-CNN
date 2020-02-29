@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """
+@date: 2020/2/29 下午2:51
+@file: pascal_voc.py
 @author: zj
-@file:   create_voc_dataset.py
-@time:   2020-02-24
+@description: 加载PASCAL VOC 2007数据集
 """
 
 import cv2
@@ -14,7 +15,7 @@ if __name__ == '__main__':
     """
     下载PASCAL VOC数据集
     """
-    dataset = VOCDetection('./data', year='2007', image_set='trainval', download=True)
+    dataset = VOCDetection('../../data', year='2007', image_set='trainval', download=True)
 
     img, target = dataset.__getitem__(1000)
     img = np.array(img)
