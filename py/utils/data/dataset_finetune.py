@@ -4,7 +4,7 @@
 @date: 2020/2/29 下午7:22
 @file: dataset_finetune.py
 @author: zj
-@description: 创建微调数据集。正样本：候选建议与标注边界框IoU大于等于0.5；负样本：IoU小于0.5（注：忽略属性difficult为True的标注）
+@description: 创建微调数据集
 """
 
 import numpy as np
@@ -85,7 +85,9 @@ def compute_ious(rects, bndboxs):
 
 def parse_annotation_jpeg(samples, annotation_dir, jpeg_dir, dst_root_dir, gs):
     """
-    获取正负样本
+    获取正负样本（注：忽略属性difficult为True的标注边界框）
+    正样本：候选建议与标注边界框IoU大于等于0.5
+    负样本：IoU大于0,小于0.5。为了限制负样本数目，其大小必须大于标注框的1/5
     """
     dst_positive_dir = os.path.join(dst_root_dir, '1')
     dst_nevative_dir = os.path.join(dst_root_dir, '0')
@@ -104,21 +106,31 @@ def parse_annotation_jpeg(samples, annotation_dir, jpeg_dir, dst_root_dir, gs):
         # 获取标注边界框
         bndboxs = parse_xml(annotation_path)
 
+        maximum_bndbox_size = 0
+        for bndbox in bndboxs:
+            xmin, ymin, xmax, ymax = bndbox
+            bndbox_size = (ymax - ymin) * (xmax - xmin)
+            if bndbox_size > maximum_bndbox_size:
+                maximum_bndbox_size = bndbox_size
+
         # 获取候选建议和标注边界框的IoU
         iou_list = compute_ious(rects, bndboxs)
         for i in range(len(iou_list)):
             xmin, ymin, xmax, ymax = rects[i]
+            rect_size = (ymax - ymin) * (xmax - xmin)
             rect_img = img[ymin:ymax, xmin:xmax]
 
             iou_score = iou_list[i]
-            if iou_list[i] < 0.5:
+            if iou_list[i] >= 0.5:
+                # 正样本
+                dst_positive_path = os.path.join(dst_positive_dir, '%s-%d.png' % (sample_name, i))
+                cv2.imwrite(dst_positive_path, rect_img)
+            if 0 < iou_list[i] < 0.5 and rect_size > maximum_bndbox_size / 5.0:
                 # 负样本
                 dst_negative_path = os.path.join(dst_nevative_dir, '%s-%d.png' % (sample_name, i))
                 cv2.imwrite(dst_negative_path, rect_img)
             else:
-                # 正样本
-                dst_positive_path = os.path.join(dst_positive_dir, '%s-%d.png' % (sample_name, i))
-                cv2.imwrite(dst_positive_path, rect_img)
+                pass
 
 
 if __name__ == '__main__':
