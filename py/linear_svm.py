@@ -18,6 +18,8 @@ import torchvision.transforms as transforms
 from torchvision.datasets import ImageFolder
 from torchvision.models import alexnet
 
+from utils.util import check_dir
+
 model_path = './models/alexnet_car.pth'
 
 
@@ -158,4 +160,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)
     lr_schduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
-    train_model(data_loaders, model, criterion, optimizer, lr_schduler, num_epochs=25, device=device)
+    best_model = train_model(data_loaders, model, criterion, optimizer, lr_schduler, num_epochs=25, device=device)
+    # 保存最好的模型参数
+    check_dir('./models')
+    torch.save(best_model.state_dict(), 'models/linear_svm_alexnet_car.pth')
