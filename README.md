@@ -6,6 +6,14 @@
 
 学习论文[Rich feature hierarchies for accurate object detection and semantic segmentation](https://arxiv.org/abs/1311.2524)，实现`R-CNN`算法，完成目标检测器的训练和使用
 
+`R-CNN`实现由如下`3`部分组成：
+ 
+ 1. 区域建议算法（`SelectiveSearch`）
+ 2. 卷积网络模型（`AlexNet`）
+ 3. 线性分类器（线性`SVM`）
+
+*区域建议算法使用`OpenCV`实现，进一步学习可参考[zjZSTU/selectivesearch](https://github.com/zjZSTU/selectivesearch)*
+
 ## 内容列表
 
 - [背景](#背景)
