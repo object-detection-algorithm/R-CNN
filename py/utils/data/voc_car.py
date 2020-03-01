@@ -4,11 +4,12 @@
 @date: 2020/2/29 下午2:43
 @file: voc_car.py
 @author: zj
-@description: 从PASCAL VOC 2007数据集中抽取类别Car
+@description: 从PASCAL VOC 2007数据集中抽取类别Car。保留1/10的数目
 """
 
 import os
 import shutil
+import random
 import numpy as np
 import xmltodict
 
@@ -41,6 +42,22 @@ def parse_train_val(data_path):
             res = line.strip().split(' ')
             if len(res) == 3 and int(res[2]) == 1:
                 samples.append(res[0])
+
+    return np.array(samples)
+
+
+def sample_train_val(samples):
+    """
+    随机采样样本，减少数据集个数（留下1/10）
+    """
+    for name in ['train', 'val']:
+        dataset = samples[name]
+        length = len(dataset)
+
+        random_samples = random.sample(range(length), int(length / 10))
+        # print(random_samples)
+        new_dataset = dataset[random_samples]
+        samples[name] = new_dataset
 
     return samples
 
@@ -95,6 +112,8 @@ def save_car(car_samples, data_root_dir, data_annotation_dir, data_jpeg_dir):
 
 if __name__ == '__main__':
     samples = {'train': parse_train_val(car_train_path), 'val': parse_train_val(car_val_path)}
+    print(samples)
+    samples = sample_train_val(samples)
     print(samples)
 
     check_dir(car_root_dir)
