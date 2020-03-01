@@ -108,7 +108,8 @@ def parse_annotation_jpeg(samples, annotation_dir, jpeg_dir, dst_root_dir, gs):
         bndboxs = parse_xml(annotation_path)
 
         maximum_bndbox_size = 0
-        for i in range(len(bndboxs)):
+        num_positive = len(bndboxs)
+        for i in range(num_positive):
             xmin, ymin, xmax, ymax = bndboxs[i]
             bndbox_img = img[ymin:ymax, xmin:xmax]
 
@@ -134,9 +135,8 @@ def parse_annotation_jpeg(samples, annotation_dir, jpeg_dir, dst_root_dir, gs):
                 negative_list.append(rect_img)
 
         # 随机舍去部分负样本，保证正负样本比在1:20之内
-        num_positive = len(bndboxs)
         num_negative = len(negative_list)
-        ratio = num_positive * 1.0 / num_negative
+        ratio = num_negative * 1.0 / num_positive
         if ratio <= 20:
             # 正负样本比在1:20之内，所以保留所有负样本
             for i in range(num_negative):
@@ -144,7 +144,8 @@ def parse_annotation_jpeg(samples, annotation_dir, jpeg_dir, dst_root_dir, gs):
                 dst_negative_path = os.path.join(dst_nevative_dir, '%s-%d.png' % (sample_name, i))
                 cv2.imwrite(dst_negative_path, negative_list[i])
         else:
-            for i in random.sample(range(num_negative), num_positive * 20):
+            idx_negative = random.sample(range(num_negative), num_positive * 20)
+            for i in idx_negative:
                 # 负样本
                 dst_negative_path = os.path.join(dst_nevative_dir, '%s-%d.png' % (sample_name, i))
                 cv2.imwrite(dst_negative_path, negative_list[i])
