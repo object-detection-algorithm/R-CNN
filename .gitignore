@@ -4,6 +4,6 @@ py/.idea
 
 py/data
 
-py/__pycache_
+py/__pycache__/
 
-py/utils/__pycache__/_
+py/utils/__pycache__/
