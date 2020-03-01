@@ -18,6 +18,8 @@ import torchvision.transforms as transforms
 from torchvision.datasets import ImageFolder
 import torchvision.models as models
 
+from utils.util import check_dir
+
 
 def load_data(data_root_dir):
     transform = transforms.Compose([
@@ -43,7 +45,7 @@ def load_data(data_root_dir):
 def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epochs=25, device=None):
     since = time.time()
 
-    best_model_wts = copy.deepcopy(model.state_dict())
+    best_model_weights = copy.deepcopy(model.state_dict())
     best_acc = 0.0
 
     for epoch in range(num_epochs):
@@ -95,7 +97,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
             # deep copy the model
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(model.state_dict())
+                best_model_weights = copy.deepcopy(model.state_dict())
 
         print()
 
@@ -105,7 +107,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
     print('Best val Acc: {:4f}'.format(best_acc))
 
     # load best model weights
-    model.load_state_dict(best_model_wts)
+    model.load_state_dict(best_model_weights)
     return model
 
 
@@ -127,4 +129,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)
     lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
-    train_model(data_loaders, model, criterion, optimizer, lr_scheduler, device=device, num_epochs=25)
+    best_model = train_model(data_loaders, model, criterion, optimizer, lr_scheduler, device=device, num_epochs=25)
+    # 保存最好的模型参数
+    check_dir('./models')
+    torch.save(best_model.state_dict(), 'models/alexnet_car.pth')
