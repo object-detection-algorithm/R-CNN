@@ -12,6 +12,7 @@ import shutil
 import random
 import numpy as np
 import xmltodict
+from utils.util import check_dir
 
 suffix_xml = '.xml'
 suffix_jpeg = '.jpg'
@@ -23,11 +24,6 @@ voc_annotation_dir = '../../data/VOCdevkit/VOC2007/Annotations/'
 voc_jpeg_dir = '../../data/VOCdevkit/VOC2007/JPEGImages/'
 
 car_root_dir = '../../data/voc_car/'
-
-
-def check_dir(data_dir):
-    if not os.path.exists(data_dir):
-        os.mkdir(data_dir)
 
 
 def parse_train_val(data_path):
