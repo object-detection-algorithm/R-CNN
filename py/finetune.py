@@ -24,6 +24,7 @@ from utils.util import check_dir
 
 def load_data(data_root_dir):
     transform = transforms.Compose([
+        transforms.ToPILImage(),
         transforms.Resize((227, 227)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
