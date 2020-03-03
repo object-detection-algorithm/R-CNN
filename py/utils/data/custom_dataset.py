@@ -52,6 +52,7 @@ class CustomDataset(Dataset):
         self.total_negative_num = int(np.sum(negative_sizes))
 
     def __getitem__(self, index: int):
+        print('index: %d' % index)
         # 定位下标所属图像
         image_id = len(self.jpeg_images) - 1
         if index < self.total_positive_num:
@@ -77,6 +78,8 @@ class CustomDataset(Dataset):
                     break
             image = self.jpeg_images[image_id][ymin:ymax, xmin:xmax]
 
+        print('[xmin, ymin, xmax, ymax]: [%d, %d, %d, %d]' % (xmin, ymin, xmax, ymax))
+        print('image_id: %d image.shape: %s' % (image_id, str(image.shape)))
         if self.transform:
             image = self.transform(image)
 
