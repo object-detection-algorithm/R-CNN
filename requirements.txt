@@ -1,1 +1,5 @@
+mkdocs==1.0.4
 mkdocs-material==4.6.0
+mkdocs-minify-plugin==0.2.1
+Markdown==3.1.1
+markdown-katex==201912.11b0
