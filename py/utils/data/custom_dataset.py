@@ -11,6 +11,8 @@ import numpy  as np
 import os
 import cv2
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+import torchvision.transforms as transforms
 
 from utils.util import parse_car_csv
 
@@ -90,7 +92,7 @@ class CustomDataset(Dataset):
         return self.total_negative_num
 
 
-if __name__ == '__main__':
+def test():
     root_dir = '../../data/finetune_car/train'
     train_data_set = CustomDataset(root_dir)
 
@@ -104,3 +106,35 @@ if __name__ == '__main__':
 
     # cv2.imshow('image', image)
     # cv2.waitKey(0)
+
+
+def test2():
+    root_dir = '../../data/finetune_car/train'
+    transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((227, 227)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
+    train_data_set = CustomDataset(root_dir, transform=transform)
+    image, target = train_data_set.__getitem__(530856)
+    print('target: %d' % target)
+    print('image.shape: ' + str(image.shape))
+
+
+if __name__ == '__main__':
+    root_dir = '../../data/finetune_car/train'
+    transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((227, 227)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
+    train_data_set = CustomDataset(root_dir, transform=transform)
+    data_loader = DataLoader(train_data_set, batch_size=128, num_workers=8, drop_last=True)
+
+    inputs, targets = next(data_loader.__iter__())
+    print(targets)
+    print(inputs.shape)
