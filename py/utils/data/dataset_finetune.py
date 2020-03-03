@@ -12,13 +12,15 @@ import shutil
 import numpy as np
 import cv2
 import os
-import xmltodict
 import selectivesearch
 from utils.util import check_dir
 from utils.util import parse_car_csv
 from utils.util import parse_xml
-from utils.util import iou
 from utils.util import compute_ious
+
+
+# positive num: 64712
+# negative num: 415134
 
 
 def parse_annotation_jpeg(annotation_path, jpeg_path, gs):
@@ -87,6 +89,10 @@ if __name__ == '__main__':
         total_num_negative = 0
 
         samples = parse_car_csv(src_root_dir)
+        # 复制csv文件
+        src_csv_path = os.path.join(src_root_dir, 'car.csv')
+        dst_csv_path = os.path.join(dst_root_dir, 'car.csv')
+        shutil.copyfile(src_csv_path, dst_csv_path)
         for sample_name in samples:
             since = time.time()
 
@@ -108,7 +114,6 @@ if __name__ == '__main__':
 
             time_elapsed = time.time() - since
             print('parse {}.png in {:.0f}m {:.0f}s'.format(sample_name, time_elapsed // 60, time_elapsed % 60))
-
     print('positive num: %d' % (total_num_positive))
     print('negative num: %d' % (total_num_negative))
     print('done')
