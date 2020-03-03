@@ -77,8 +77,8 @@ class CustomDataset(Dataset):
                     break
             image = self.jpeg_images[image_id][ymin:ymax, xmin:xmax]
 
-        print('[xmin, ymin, xmax, ymax]: [%d, %d, %d, %d]' % (xmin, ymin, xmax, ymax))
-        print('index: %d image_id: %d target: %d image.shape: %s' % (index, image_id, target, str(image.shape)))
+        print('index: %d image_id: %d target: %d image.shape: %s [xmin, ymin, xmax, ymax]: [%d, %d, %d, %d]' %
+              (index, image_id, target, str(image.shape), xmin, ymin, xmax, ymax))
         if self.transform:
             image = self.transform(image)
 
