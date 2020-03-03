@@ -15,9 +15,10 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from torchvision.datasets import ImageFolder
 import torchvision.models as models
 
+from utils.data.custom_dataset import CustomDataset
+from utils.data.custom_sampler import CustomSampler
 from utils.util import check_dir
 
 
@@ -32,12 +33,13 @@ def load_data(data_root_dir):
     data_loaders = {}
     data_sizes = {}
     for name in ['train', 'val']:
-        data_path = os.path.join(data_root_dir, name)
-        data_set = ImageFolder(data_path, transform=transform)
-        data_loader = DataLoader(data_set, batch_size=128, shuffle=True, num_workers=8)
+        data_dir = os.path.join(data_root_dir, name)
+        data_set = CustomDataset(data_dir, transform=transform)
+        data_sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
+        data_loader = DataLoader(data_set, batch_size=128, sampler=data_sampler, num_workers=8, drop_last=True)
 
         data_loaders[name] = data_loader
-        data_sizes[name] = len(data_set)
+        data_sizes[name] = data_sampler.__len__()
 
     return data_loaders, data_sizes
 
@@ -115,8 +117,6 @@ if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     data_loaders, data_sizes = load_data('./data/finetune_car')
-    # print(data_loaders)
-    # print(data_sizes)
 
     model = models.alexnet(pretrained=True)
     # print(model)
