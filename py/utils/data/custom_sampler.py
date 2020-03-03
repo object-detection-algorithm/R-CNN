@@ -10,6 +10,8 @@
 import numpy  as np
 import random
 from torch.utils.data import Sampler
+from torch.utils.data import DataLoader
+from utils.data.custom_dataset import CustomDataset
 
 
 class CustomSampler(Sampler):
@@ -37,11 +39,30 @@ class CustomSampler(Sampler):
     def __iter__(self):
         sampler_list = list()
         for i in range(self.num_iter):
-            sampler_list.extend(random.shuffle(np.concatenate(
+            tmp = np.concatenate(
                 (random.sample(self.idx_list[:self.num_positive], self.batch_positive),
                  random.sample(self.idx_list[self.num_positive:], self.batch_negative))
-            )))
+            )
+            random.shuffle(tmp)
+            sampler_list.extend(tmp)
         return iter(sampler_list)
 
     def __len__(self) -> int:
         return self.num_iter * self.batch
+
+    def get_num_batch(self) -> int:
+        return self.num_iter
+
+
+if __name__ == '__main__':
+    root_dir = '../../data/finetune_car/train'
+    train_data_set = CustomDataset(root_dir)
+    train_sampler = CustomSampler(train_data_set.get_positive_num(), train_data_set.get_negative_num(), 32, 96)
+
+    print('sampler len: %d' % train_sampler.__len__())
+    print('sampler batch num: %d' % train_sampler.get_num_batch())
+
+    first_idx_list = list(train_sampler.__iter__())[:128]
+    print(first_idx_list)
+    # 单次批量中正样本个数
+    print('positive batch: %d' % np.sum(np.array(first_idx_list) < 66517))
