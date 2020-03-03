@@ -46,30 +46,33 @@ class CustomDataset(Dataset):
         self.positive_rects = positive_rects
         self.negative_sizes = negative_sizes
         self.negative_rects = negative_rects
-        self.total_positive_size = np.sum(positive_sizes)
-        self.total_negative_size = np.sum(negative_sizes)
+        self.total_positive_num = int(np.sum(positive_sizes))
+        self.total_negative_num = int(np.sum(negative_sizes))
 
     def __getitem__(self, index: int):
         # 定位下标所属图像
-        image_id = 0
-        if index < self.total_positive_size:
+        image_id = len(self.jpeg_images) - 1
+        if index < self.total_positive_num:
             # 正样本
             target = 1
-            xmin, ymin, xmax, ymax = self.positive_rects
+            xmin, ymin, xmax, ymax = self.positive_rects[index]
             # 寻找所属图像
             for i in range(len(self.positive_sizes) - 1):
                 if np.sum(self.positive_sizes[:i]) <= index <= np.sum(self.positive_sizes[:(i + 1)]):
                     image_id = i
+                    break
             image = self.jpeg_images[image_id][ymin:ymax, xmin:xmax]
         else:
             # 负样本
             target = 0
-            xmin, ymin, xmax, ymax = self.negative_rects
+            idx = index - self.total_positive_num
+            xmin, ymin, xmax, ymax = self.negative_rects[idx]
             # 寻找所属图像
-            idx = index - self.total_positive_size
+            image_id = len(self.jpeg_images) - 1
             for i in range(len(self.negative_sizes) - 1):
                 if np.sum(self.positive_sizes[:i]) <= idx <= np.sum(self.positive_sizes[:(i + 1)]):
                     image_id = i
+                    break
             image = self.jpeg_images[image_id][ymin:ymax, xmin:xmax]
 
         if self.transform:
@@ -78,4 +81,26 @@ class CustomDataset(Dataset):
         return image, target
 
     def __len__(self) -> int:
-        return self.total_positive_size + self.total_negative_size
+        return self.total_positive_num + self.total_negative_num
+
+    def get_positive_num(self) -> int:
+        return self.total_positive_num
+
+    def get_negative_num(self) -> int:
+        return self.total_negative_num
+
+
+if __name__ == '__main__':
+    root_dir = '../../data/finetune_car/train'
+    train_data_set = CustomDataset(root_dir)
+
+    print('positive num: %d' % train_data_set.get_positive_num())
+    print('negatie num: %d' % train_data_set.get_negative_num())
+    print('total num: %d' % train_data_set.__len__())
+
+    # 测试id=3/66516/66517/530856
+    image, target = train_data_set.__getitem__(530856)
+    print('target: %d' % target)
+
+    # cv2.imshow('image', image)
+    # cv2.waitKey(0)
