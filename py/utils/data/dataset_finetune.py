@@ -18,9 +18,13 @@ from utils.util import parse_car_csv
 from utils.util import parse_xml
 from utils.util import compute_ious
 
-
+# 正样本
+# positive num: 66517
+# negatie num: 464340
+# 负样本
 # positive num: 64712
 # negative num: 415134
+
 
 
 def parse_annotation_jpeg(annotation_path, jpeg_path, gs):
