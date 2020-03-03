@@ -109,8 +109,8 @@ def save_car(car_samples, data_root_dir, data_annotation_dir, data_jpeg_dir):
 if __name__ == '__main__':
     samples = {'train': parse_train_val(car_train_path), 'val': parse_train_val(car_val_path)}
     print(samples)
-    samples = sample_train_val(samples)
-    print(samples)
+    # samples = sample_train_val(samples)
+    # print(samples)
 
     check_dir(car_root_dir)
     for name in ['train', 'val']:
