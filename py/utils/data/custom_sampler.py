@@ -11,6 +11,7 @@ import numpy  as np
 import random
 from torch.utils.data import Sampler
 from torch.utils.data import DataLoader
+import torchvision.transforms as transforms
 from utils.data.custom_dataset import CustomDataset
 
 
@@ -54,7 +55,7 @@ class CustomSampler(Sampler):
         return self.num_iter
 
 
-if __name__ == '__main__':
+def test():
     root_dir = '../../data/finetune_car/train'
     train_data_set = CustomDataset(root_dir)
     train_sampler = CustomSampler(train_data_set.get_positive_num(), train_data_set.get_negative_num(), 32, 96)
@@ -66,3 +67,21 @@ if __name__ == '__main__':
     print(first_idx_list)
     # 单次批量中正样本个数
     print('positive batch: %d' % np.sum(np.array(first_idx_list) < 66517))
+
+
+if __name__ == '__main__':
+    root_dir = '../../data/finetune_car/train'
+    transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((227, 227)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
+    train_data_set = CustomDataset(root_dir, transform=transform)
+    train_sampler = CustomSampler(train_data_set.get_positive_num(), train_data_set.get_negative_num(), 32, 96)
+    data_loader = DataLoader(train_data_set, batch_size=128, sampler=train_sampler, num_workers=8, drop_last=True)
+
+    inputs, targets = next(data_loader.__iter__())
+    print(targets)
+    print(inputs.shape)
