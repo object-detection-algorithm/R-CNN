@@ -15,10 +15,12 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from torchvision.datasets import ImageFolder
 from torchvision.models import alexnet
 
+from utils.data.custom_classifier_dataset import CustomClassifierDataset
+from utils.data.custom_sampler import CustomSampler
 from utils.util import check_dir
+from utils.util import save_model
 
 model_path = './models/alexnet_car.pth'
 
@@ -34,11 +36,14 @@ def load_data(data_root_dir):
     data_loaders = {}
     data_sizes = {}
     for name in ['train', 'val']:
-        data_path = os.path.join(data_root_dir, name)
-        data_set = ImageFolder(data_path, transform=transform)
-        data_loader = DataLoader(data_set, batch_size=8, shuffle=True, num_workers=8)
+        data_dir = os.path.join(data_root_dir, name)
+
+        data_set = CustomClassifierDataset(data_dir, transform=transform)
+        sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
+
+        data_loader = DataLoader(data_set, batch_size=8, sampler=sampler, num_workers=8, drop_last=True)
         data_loaders[name] = data_loader
-        data_sizes[name] = len(data_set)
+        data_sizes[name] = len(sampler)
     return data_loaders, data_sizes
 
 
@@ -74,6 +79,11 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
+        # 保存训练过程中误识别为正样本的负样本，用于下一次的训练
+        hard_negative_dict = dict()
+        hard_negative_dict['train'] = list()
+        hard_negative_dict['val'] = list()
+
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
             if phase == 'train':
@@ -84,8 +94,13 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
             running_loss = 0.0
             running_corrects = 0
 
+            # 输出正负样本数
+            data_set = data_loaders[phase].dataset
+            print('{} - positive_num: {} - negative_num: {}'.format(
+                phase, data_set.get_positive_num(), data_set.get_negative_num()))
+
             # Iterate over data.
-            for inputs, labels in data_loaders[phase]:
+            for inputs, labels, cache_dicts in data_loaders[phase]:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
@@ -108,6 +123,10 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
+
+                mis_mask = (labels == 0) & (preds == 1)
+                mis_dicts = cache_dicts[mis_mask]
+                hard_negative_dict[phase].extend(mis_dicts)
             if phase == 'train':
                 lr_scheduler.step()
 
@@ -122,7 +141,14 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 best_acc = epoch_acc
                 best_model_weights = copy.deepcopy(model.state_dict())
 
-        print()
+            # 训练完成后，重置负样本，进行hard negatives mining
+            data_set = data_loaders[phase]
+            data_set.set_negative_list(hard_negative_dict[phase])
+            sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
+            data_loaders[phase] = DataLoader(data_set, batch_size=8, sampler=sampler, num_workers=8, drop_last=True)
+
+        # 每训练一轮就保存
+        save_model(model, 'models/linear_svm_alexnet_car_%d.pth' % epoch)
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
@@ -138,8 +164,6 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     data_loaders, data_sizes = load_data('./data/classifier_car')
-    # print(data_loaders)
-    # print(data_sizes)
 
     # 加载CNN模型
     model = alexnet()
@@ -162,5 +186,4 @@ if __name__ == '__main__':
 
     best_model = train_model(data_loaders, model, criterion, optimizer, lr_schduler, num_epochs=25, device=device)
     # 保存最好的模型参数
-    check_dir('./models')
-    torch.save(best_model.state_dict(), 'models/linear_svm_alexnet_car.pth')
+    save_model(best_model, 'models/best_linear_svm_alexnet_car.pth')
