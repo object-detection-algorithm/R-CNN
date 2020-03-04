@@ -30,7 +30,7 @@ def parse_xml(xml_path):
     # print(xml_path)
     with open(xml_path, 'rb') as f:
         xml_dict = xmltodict.parse(f)
-        print(xml_dict)
+        # print(xml_dict)
 
         bndboxs = list()
         objects = xml_dict['annotation']['object']
