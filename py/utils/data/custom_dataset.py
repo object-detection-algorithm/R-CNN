@@ -46,6 +46,8 @@ class CustomDataset(Dataset):
                 if rects.shape[0] == 4:
                     positive_rects.append(rects)
                     positive_sizes.append(1)
+                else:
+                    positive_sizes.append(0)
             else:
                 positive_rects.extend(rects)
                 positive_sizes.append(len(rects))
@@ -56,6 +58,8 @@ class CustomDataset(Dataset):
                 if rects.shape[0] == 4:
                     negative_rects.append(rects)
                     negative_sizes.append(1)
+                else:
+                    positive_sizes.append(0)
             else:
                 negative_rects.extend(rects)
                 negative_sizes.append(len(rects))
@@ -165,4 +169,5 @@ def test3():
 
 if __name__ == '__main__':
     # test(159622)
-    test(4051)
+    # test(4051)
+    test(24768)
