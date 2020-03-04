@@ -19,10 +19,10 @@ from utils.util import parse_xml
 from utils.util import compute_ious
 
 
-# 正样本
+# train
 # positive num: 66517
 # negatie num: 464340
-# 负样本
+# val
 # positive num: 64712
 # negative num: 415134
 
@@ -118,6 +118,6 @@ if __name__ == '__main__':
 
             time_elapsed = time.time() - since
             print('parse {}.png in {:.0f}m {:.0f}s'.format(sample_name, time_elapsed // 60, time_elapsed % 60))
-        print('%s positive num: %d' % (sample_name, total_num_positive))
-        print('%s negative num: %d' % (sample_name, total_num_negative))
+        print('%s positive num: %d' % (name, total_num_positive))
+        print('%s negative num: %d' % (name, total_num_negative))
     print('done')

@@ -21,6 +21,12 @@ from utils.util import parse_xml
 from utils.util import iou
 from utils.util import compute_ious
 
+# train
+# positive num: 625
+# negative num: 366028
+# val
+# positive num: 625
+# negative num: 321474
 
 def parse_annotation_jpeg(annotation_path, jpeg_path, gs):
     """
@@ -110,6 +116,6 @@ if __name__ == '__main__':
 
             time_elapsed = time.time() - since
             print('parse {}.png in {:.0f}m {:.0f}s'.format(sample_name, time_elapsed // 60, time_elapsed % 60))
-        print('%s positive num: %d' % (sample_name, total_num_positive))
-        print('%s negative num: %d' % (sample_name, total_num_negative))
+        print('%s positive num: %d' % (name, total_num_positive))
+        print('%s negative num: %d' % (name, total_num_negative))
     print('done')
