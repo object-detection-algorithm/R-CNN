@@ -10,6 +10,7 @@
 import numpy  as np
 import os
 import cv2
+from PIL import Image
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
@@ -21,6 +22,7 @@ class CustomDataset(Dataset):
 
     def __init__(self, root_dir, transform=None):
         samples = parse_car_csv(root_dir)
+
         jpeg_images = [cv2.imread(os.path.join(root_dir, 'JPEGImages', sample_name + ".jpg"))
                        for sample_name in samples]
 
@@ -28,9 +30,12 @@ class CustomDataset(Dataset):
                                 for sample_name in samples]
         negative_annotations = [os.path.join(root_dir, 'Annotations', sample_name + '_0.csv')
                                 for sample_name in samples]
+
+        # 边界框大小
         positive_sizes = list()
-        positive_rects = list()
         negative_sizes = list()
+        # 边界框坐标
+        positive_rects = list()
         negative_rects = list()
 
         for annotation_path in positive_annotations:
@@ -45,8 +50,8 @@ class CustomDataset(Dataset):
         self.transform = transform
         self.jpeg_images = jpeg_images
         self.positive_sizes = positive_sizes
-        self.positive_rects = positive_rects
         self.negative_sizes = negative_sizes
+        self.positive_rects = positive_rects
         self.negative_rects = negative_rects
         self.total_positive_num = int(np.sum(positive_sizes))
         self.total_negative_num = int(np.sum(negative_sizes))
@@ -60,7 +65,7 @@ class CustomDataset(Dataset):
             xmin, ymin, xmax, ymax = self.positive_rects[index]
             # 寻找所属图像
             for i in range(len(self.positive_sizes) - 1):
-                if np.sum(self.positive_sizes[:i]) <= index <= np.sum(self.positive_sizes[:(i + 1)]):
+                if np.sum(self.positive_sizes[:i]) <= index < np.sum(self.positive_sizes[:(i + 1)]):
                     image_id = i
                     break
             image = self.jpeg_images[image_id][ymin:ymax, xmin:xmax]
@@ -70,15 +75,14 @@ class CustomDataset(Dataset):
             idx = index - self.total_positive_num
             xmin, ymin, xmax, ymax = self.negative_rects[idx]
             # 寻找所属图像
-            image_id = len(self.jpeg_images) - 1
             for i in range(len(self.negative_sizes) - 1):
-                if np.sum(self.positive_sizes[:i]) <= idx <= np.sum(self.positive_sizes[:(i + 1)]):
+                if np.sum(self.negative_sizes[:i]) <= idx < np.sum(self.negative_sizes[:(i + 1)]):
                     image_id = i
                     break
             image = self.jpeg_images[image_id][ymin:ymax, xmin:xmax]
 
-        print('index: %d image_id: %d target: %d image.shape: %s [xmin, ymin, xmax, ymax]: [%d, %d, %d, %d]' %
-              (index, image_id, target, str(image.shape), xmin, ymin, xmax, ymax))
+        # print('index: %d image_id: %d target: %d image.shape: %s [xmin, ymin, xmax, ymax]: [%d, %d, %d, %d]' %
+        #       (index, image_id, target, str(image.shape), xmin, ymin, xmax, ymax))
         if self.transform:
             image = self.transform(image)
 
@@ -94,7 +98,7 @@ class CustomDataset(Dataset):
         return self.total_negative_num
 
 
-def test():
+def test(idx):
     root_dir = '../../data/finetune_car/train'
     train_data_set = CustomDataset(root_dir)
 
@@ -103,8 +107,12 @@ def test():
     print('total num: %d' % train_data_set.__len__())
 
     # 测试id=3/66516/66517/530856
-    image, target = train_data_set.__getitem__(530856)
+    image, target = train_data_set.__getitem__(idx)
     print('target: %d' % target)
+
+    image = Image.fromarray(image)
+    print(image)
+    print(type(image))
 
     # cv2.imshow('image', image)
     # cv2.waitKey(0)
@@ -125,7 +133,7 @@ def test2():
     print('image.shape: ' + str(image.shape))
 
 
-if __name__ == '__main__':
+def test3():
     root_dir = '../../data/finetune_car/train'
     transform = transforms.Compose([
         transforms.ToPILImage(),
@@ -140,3 +148,7 @@ if __name__ == '__main__':
     inputs, targets = next(data_loader.__iter__())
     print(targets)
     print(inputs.shape)
+
+
+if __name__ == '__main__':
+    test(159622)
