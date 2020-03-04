@@ -40,12 +40,25 @@ class CustomDataset(Dataset):
 
         for annotation_path in positive_annotations:
             rects = np.loadtxt(annotation_path, dtype=np.int, delimiter=' ')
-            positive_rects.extend(rects)
-            positive_sizes.append(len(rects))
+            # 存在文件为空或者文件中仅有单行数据
+            if len(rects.shape) == 1:
+                # 是否为单行
+                if rects.shape[0] == 4:
+                    positive_rects.append(rects)
+                    positive_sizes.append(1)
+            else:
+                positive_rects.extend(rects)
+                positive_sizes.append(len(rects))
         for annotation_path in negative_annotations:
             rects = np.loadtxt(annotation_path, dtype=np.int, delimiter=' ')
-            negative_rects.extend(rects)
-            negative_sizes.append(len(rects))
+            # 和正样本规则一样
+            if len(rects.shape) == 1:
+                if rects.shape[0] == 4:
+                    negative_rects.append(rects)
+                    negative_sizes.append(1)
+            else:
+                negative_rects.extend(rects)
+                negative_sizes.append(len(rects))
 
         self.transform = transform
         self.jpeg_images = jpeg_images
@@ -103,7 +116,7 @@ def test(idx):
     train_data_set = CustomDataset(root_dir)
 
     print('positive num: %d' % train_data_set.get_positive_num())
-    print('negatie num: %d' % train_data_set.get_negative_num())
+    print('negative num: %d' % train_data_set.get_negative_num())
     print('total num: %d' % train_data_set.__len__())
 
     # 测试id=3/66516/66517/530856
@@ -151,4 +164,5 @@ def test3():
 
 
 if __name__ == '__main__':
-    test(159622)
+    # test(159622)
+    test(4051)
