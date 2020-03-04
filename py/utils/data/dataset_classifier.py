@@ -22,10 +22,10 @@ from utils.util import iou
 from utils.util import compute_ious
 
 # train
-# positive num: 625
+# positive num: 1327
 # negative num: 366028
 # val
-# positive num: 625
+# positive num: 1216
 # negative num: 321474
 
 def parse_annotation_jpeg(annotation_path, jpeg_path, gs):
