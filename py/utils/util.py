@@ -10,6 +10,7 @@
 import os
 import numpy as np
 import xmltodict
+import torch
 
 
 def check_dir(data_dir):
@@ -80,3 +81,8 @@ def compute_ious(rects, bndboxs):
         scores = iou(rect, bndboxs)
         iou_list.append(max(scores))
     return iou_list
+
+def save_model(model, model_save_path):
+    # 保存最好的模型参数
+    check_dir('./models')
+    torch.save(model.state_dict(), model_save_path)
