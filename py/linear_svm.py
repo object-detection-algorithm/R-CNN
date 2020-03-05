@@ -138,7 +138,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 is_exit = True
                 break
 
-            num = 50
+            # num = 50
             # Iterate over data.
             for inputs, labels, cache_dicts in data_loaders[phase]:
                 inputs = inputs.to(device)
@@ -168,9 +168,9 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 fp_mask = (labels == 0) & (preds == 1)
                 hard_negative_dict[phase] = add_hard_negative(fp_mask, cache_dicts, hard_negative_dict[phase],
                                                               phase=phase)
-                num -= 1
-                if num == 0:
-                    break
+                # num -= 1
+                # if num == 0:
+                #     break
             if phase == 'train':
                 lr_scheduler.step()
 
