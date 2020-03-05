@@ -173,6 +173,8 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
             data_set.set_negative_list(hard_negative_dict[phase])
             sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
             data_loaders[phase] = DataLoader(data_set, batch_size=128, sampler=sampler, num_workers=8, drop_last=True)
+            # 重置数据集大小
+            data_sizes[phase] = len(sampler)
 
         # 每训练一轮就保存
         save_model(model, 'models/linear_svm_alexnet_car_%d.pth' % epoch)
@@ -205,7 +207,7 @@ if __name__ == '__main__':
         param.requires_grad = False
     # 创建SVM分类器
     model.classifier[6] = nn.Linear(num_features, num_classes)
-    print(model)
+    # print(model)
     model = model.to(device)
 
     criterion = hinge_loss
