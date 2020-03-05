@@ -82,8 +82,6 @@ class CustomClassifierDataset(Dataset):
         self.negative_list = negative_list
 
     def __getitem__(self, index: int):
-        cache_dict = None
-
         # 定位下标所属图像
         if index < len(self.positive_list):
             # 正样本
