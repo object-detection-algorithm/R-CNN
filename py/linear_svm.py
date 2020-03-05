@@ -23,7 +23,9 @@ from utils.data.custom_sampler import CustomSampler
 from utils.util import check_dir
 from utils.util import save_model
 
-model_path = './models/alexnet_car.pth'
+batch_positive = 32
+batch_negative = 96
+batch_total = 128
 
 
 def load_data(data_root_dir):
@@ -32,7 +34,7 @@ def load_data(data_root_dir):
         transforms.Resize((227, 227)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
     data_loaders = {}
@@ -41,9 +43,10 @@ def load_data(data_root_dir):
         data_dir = os.path.join(data_root_dir, name)
 
         data_set = CustomClassifierDataset(data_dir, transform=transform)
-        sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
+        sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(),
+                                batch_positive, batch_negative)
 
-        data_loader = DataLoader(data_set, batch_size=128, sampler=sampler, num_workers=8, drop_last=True)
+        data_loader = DataLoader(data_set, batch_size=batch_total, sampler=sampler, num_workers=8, drop_last=True)
         data_loaders[name] = data_loader
         data_sizes[name] = len(sampler)
     return data_loaders, data_sizes
@@ -79,15 +82,15 @@ def add_hard_negative(fp_mask, cache_dicts, hard_negative_list, phase='train'):
     for i in range(len(fp_rects)):
         # 创建误认为正样本的负样本
         fp_dict = dict()
-        fp_dict['rect'] = fp_rects[i]
-        fp_dict['image_id'] = fp_image_ids[i]
+        fp_dict['rect'] = fp_rects[i].numpy()
+        fp_dict['image_id'] = fp_image_ids[i].item()
         # fp_dict['image_name'] = fp_image_name[i]
 
         # 如果已存在，那么不添加
         is_exist = False
         for hard_negative_dict in hard_negative_list:
             if (hard_negative_dict['image_id'] == fp_dict['image_id']) and \
-                    (torch.sum(hard_negative_dict['rect'] == fp_dict['rect']) == 4):
+                    (np.sum(hard_negative_dict['rect'] == fp_dict['rect']) == 4):
                 is_exist = True
         if not is_exist:
             hard_negative_list.append(fp_dict)
@@ -101,7 +104,11 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
     best_model_weights = copy.deepcopy(model.state_dict())
     best_acc = 0.0
 
+    is_exit = False
     for epoch in range(num_epochs):
+        if is_exit:
+            break
+
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
@@ -125,7 +132,13 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
             print('{} - positive_num: {} - negative_num: {}'.format(
                 phase, data_set.get_positive_num(), data_set.get_negative_num()))
             print('total size: {}'.format(data_sizes))
+            # 如果hard negative数目小于单次批量数目，那么进行停止训练
+            if data_loaders['train'].dataset.get_negative_num() < batch_negative or \
+                    data_loaders['val'].dataset.get_negative_num() < batch_negative:
+                is_exit = True
+                break
 
+            num = 50
             # Iterate over data.
             for inputs, labels, cache_dicts in data_loaders[phase]:
                 inputs = inputs.to(device)
@@ -155,6 +168,9 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 fp_mask = (labels == 0) & (preds == 1)
                 hard_negative_dict[phase] = add_hard_negative(fp_mask, cache_dicts, hard_negative_dict[phase],
                                                               phase=phase)
+                num -= 1
+                if num == 0:
+                    break
             if phase == 'train':
                 lr_scheduler.step()
 
@@ -169,12 +185,12 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 best_acc = epoch_acc
                 best_model_weights = copy.deepcopy(model.state_dict())
 
-            print('{} - hard negative list: %d' % (phase, len(hard_negative_dict[phase])))
             # 训练完成后，重置负样本，进行hard negatives mining
-            data_set = data_loaders[phase].dataset
             data_set.set_negative_list(hard_negative_dict[phase])
-            sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
-            data_loaders[phase] = DataLoader(data_set, batch_size=128, sampler=sampler, num_workers=8, drop_last=True)
+            sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(),
+                                    batch_positive, batch_negative)
+            data_loaders[phase] = DataLoader(data_set, batch_size=batch_total, sampler=sampler,
+                                             num_workers=8, drop_last=True)
             # 重置数据集大小
             data_sizes[phase] = len(sampler)
 
@@ -192,12 +208,13 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    # device = 'cpu'
+    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = 'cpu'
 
     data_loaders, data_sizes = load_data('./data/classifier_car')
 
     # 加载CNN模型
+    model_path = './models/alexnet_car.pth'
     model = alexnet()
     num_classes = 2
     num_features = model.classifier[6].in_features
