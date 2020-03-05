@@ -124,6 +124,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
             data_set = data_loaders[phase].dataset
             print('{} - positive_num: {} - negative_num: {}'.format(
                 phase, data_set.get_positive_num(), data_set.get_negative_num()))
+            print('data_sizers: ' % (str(data_sizes)))
 
             # Iterate over data.
             for inputs, labels, cache_dicts in data_loaders[phase]:
@@ -168,6 +169,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 best_acc = epoch_acc
                 best_model_weights = copy.deepcopy(model.state_dict())
 
+            print('{} - hard negative list: %d' % (phase, len(hard_negative_dict[phase])))
             # 训练完成后，重置负样本，进行hard negatives mining
             data_set = data_loaders[phase].dataset
             data_set.set_negative_list(hard_negative_dict[phase])
@@ -190,8 +192,8 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
 
 
 if __name__ == '__main__':
-    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    device = 'cpu'
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    # device = 'cpu'
 
     data_loaders, data_sizes = load_data('./data/classifier_car')
 
