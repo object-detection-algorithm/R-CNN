@@ -10,6 +10,7 @@
 import time
 import copy
 import os
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -27,6 +28,7 @@ model_path = './models/alexnet_car.pth'
 
 def load_data(data_root_dir):
     transform = transforms.Compose([
+        transforms.ToPILImage(),
         transforms.Resize((227, 227)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
@@ -41,7 +43,7 @@ def load_data(data_root_dir):
         data_set = CustomClassifierDataset(data_dir, transform=transform)
         sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
 
-        data_loader = DataLoader(data_set, batch_size=8, sampler=sampler, num_workers=8, drop_last=True)
+        data_loader = DataLoader(data_set, batch_size=128, sampler=sampler, num_workers=8, drop_last=True)
         data_loaders[name] = data_loader
         data_sizes[name] = len(sampler)
     return data_loaders, data_sizes
@@ -67,6 +69,30 @@ def hinge_loss(outputs, labels):
     # loss += reg * torch.sum(weight ** 2)
 
     return loss
+
+
+def add_hard_negative(fp_mask, cache_dicts, hard_negative_list, phase='train'):
+    fp_rects = cache_dicts['rect'][fp_mask]
+    fp_image_ids = cache_dicts['image_id'][fp_mask]
+    # fp_image_name = cache_dicts['image_name'][fp_mask]
+
+    for i in range(len(fp_rects)):
+        # 创建误认为正样本的负样本
+        fp_dict = dict()
+        fp_dict['rect'] = fp_rects[i]
+        fp_dict['image_id'] = fp_image_ids[i]
+        # fp_dict['image_name'] = fp_image_name[i]
+
+        # 如果已存在，那么不添加
+        is_exist = False
+        for hard_negative_dict in hard_negative_list:
+            if (hard_negative_dict['image_id'] == fp_dict['image_id']) and \
+                    (torch.sum(hard_negative_dict['rect'] == fp_dict['rect']) == 4):
+                is_exist = True
+        if not is_exist:
+            hard_negative_list.append(fp_dict)
+
+    return hard_negative_list
 
 
 def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epochs=25, device=None):
@@ -124,9 +150,10 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
 
-                mis_mask = (labels == 0) & (preds == 1)
-                mis_dicts = cache_dicts[mis_mask]
-                hard_negative_dict[phase].extend(mis_dicts)
+                # 假阳性掩码
+                fp_mask = (labels == 0) & (preds == 1)
+                hard_negative_dict[phase] = add_hard_negative(fp_mask, cache_dicts, hard_negative_dict[phase],
+                                                              phase=phase)
             if phase == 'train':
                 lr_scheduler.step()
 
@@ -142,10 +169,10 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 best_model_weights = copy.deepcopy(model.state_dict())
 
             # 训练完成后，重置负样本，进行hard negatives mining
-            data_set = data_loaders[phase]
+            data_set = data_loaders[phase].dataset
             data_set.set_negative_list(hard_negative_dict[phase])
             sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
-            data_loaders[phase] = DataLoader(data_set, batch_size=8, sampler=sampler, num_workers=8, drop_last=True)
+            data_loaders[phase] = DataLoader(data_set, batch_size=128, sampler=sampler, num_workers=8, drop_last=True)
 
         # 每训练一轮就保存
         save_model(model, 'models/linear_svm_alexnet_car_%d.pth' % epoch)
@@ -161,7 +188,8 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = 'cpu'
 
     data_loaders, data_sizes = load_data('./data/classifier_car')
 
@@ -177,7 +205,7 @@ if __name__ == '__main__':
         param.requires_grad = False
     # 创建SVM分类器
     model.classifier[6] = nn.Linear(num_features, num_classes)
-    # print(model)
+    print(model)
     model = model.to(device)
 
     criterion = hinge_loss
