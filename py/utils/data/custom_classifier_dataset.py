@@ -40,7 +40,7 @@ class CustomClassifierDataset(Dataset):
 
                     positive_dict['rect'] = positive_annotations
                     positive_dict['image_id'] = idx
-                    positive_dict['image_name'] = sample_name
+                    # positive_dict['image_name'] = sample_name
 
                     positive_list.append(positive_dict)
             else:
@@ -49,7 +49,7 @@ class CustomClassifierDataset(Dataset):
 
                     positive_dict['rect'] = positive_annotation
                     positive_dict['image_id'] = idx
-                    positive_dict['image_name'] = sample_name
+                    # positive_dict['image_name'] = sample_name
 
                     positive_list.append(positive_dict)
 
@@ -63,7 +63,7 @@ class CustomClassifierDataset(Dataset):
 
                     negative_dict['rect'] = negative_annotations
                     negative_dict['image_id'] = idx
-                    negative_dict['image_name'] = sample_name
+                    # negative_dict['image_name'] = sample_name
 
                     negative_list.append(negative_dict)
             else:
@@ -72,7 +72,7 @@ class CustomClassifierDataset(Dataset):
 
                     negative_dict['rect'] = negative_annotation
                     negative_dict['image_id'] = idx
-                    negative_dict['image_name'] = sample_name
+                    # negative_dict['image_name'] = sample_name
 
                     negative_list.append(negative_dict)
 
@@ -130,7 +130,7 @@ class CustomClassifierDataset(Dataset):
 
 
 def test(idx):
-    root_dir = '../../data/classifier_car/train'
+    root_dir = '../../data/classifier_car/val'
     train_data_set = CustomClassifierDataset(root_dir)
 
     print('positive num: %d' % train_data_set.get_positive_num())
@@ -186,6 +186,6 @@ def test3():
 if __name__ == '__main__':
     # test(159622)
     # test(4051)
-    # test(24768)
+    test(24768)
     # test2()
-    test3()
+    # test3()
