@@ -124,7 +124,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
             data_set = data_loaders[phase].dataset
             print('{} - positive_num: {} - negative_num: {}'.format(
                 phase, data_set.get_positive_num(), data_set.get_negative_num()))
-            print('data_sizers: ' % (str(data_sizes)))
+            print('total size: {}'.format(data_sizes))
 
             # Iterate over data.
             for inputs, labels, cache_dicts in data_loaders[phase]:
