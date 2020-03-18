@@ -2,7 +2,7 @@
 
 """
 @date: 2020/3/3 下午7:06
-@file: custom_dataset.py
+@file: custom_finetune_dataset.py
 @author: zj
 @description: 自定义微调数据类
 """
@@ -18,7 +18,7 @@ import torchvision.transforms as transforms
 from utils.util import parse_car_csv
 
 
-class CustomDataset(Dataset):
+class CustomFinetuneDataset(Dataset):
 
     def __init__(self, root_dir, transform=None):
         samples = parse_car_csv(root_dir)
