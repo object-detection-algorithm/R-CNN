@@ -17,8 +17,8 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torchvision.models as models
 
-from utils.data.custom_dataset import CustomDataset
-from utils.data.custom_sampler import CustomSampler
+from utils.data.custom_finetune_dataset import CustomFinetuneDataset
+from utils.data.custom_batch_sampler import CustomBatchSampler
 from utils.util import check_dir
 
 
@@ -35,8 +35,8 @@ def load_data(data_root_dir):
     data_sizes = {}
     for name in ['train', 'val']:
         data_dir = os.path.join(data_root_dir, name)
-        data_set = CustomDataset(data_dir, transform=transform)
-        data_sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
+        data_set = CustomFinetuneDataset(data_dir, transform=transform)
+        data_sampler = CustomBatchSampler(data_set.get_positive_num(), data_set.get_negative_num(), 32, 96)
         data_loader = DataLoader(data_set, batch_size=128, sampler=data_sampler, num_workers=8, drop_last=True)
 
         data_loaders[name] = data_loader

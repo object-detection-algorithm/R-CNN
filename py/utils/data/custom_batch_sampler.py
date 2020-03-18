@@ -2,7 +2,7 @@
 
 """
 @date: 2020/3/3 下午7:38
-@file: custom_sampler.py
+@file: custom_batch_sampler.py
 @author: zj
 @description: 自定义采样器
 """
@@ -12,10 +12,10 @@ import random
 from torch.utils.data import Sampler
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from utils.data.custom_dataset import CustomDataset
+from utils.data.custom_finetune_dataset import CustomFinetuneDataset
 
 
-class CustomSampler(Sampler):
+class CustomBatchSampler(Sampler):
 
     def __init__(self, num_positive, num_negative, batch_positive, batch_negative) -> None:
         """
@@ -78,8 +78,8 @@ if __name__ == '__main__':
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    train_data_set = CustomDataset(root_dir, transform=transform)
-    train_sampler = CustomSampler(train_data_set.get_positive_num(), train_data_set.get_negative_num(), 32, 96)
+    train_data_set = CustomFinetuneDataset(root_dir, transform=transform)
+    train_sampler = CustomBatchSampler(train_data_set.get_positive_num(), train_data_set.get_negative_num(), 32, 96)
     data_loader = DataLoader(train_data_set, batch_size=128, sampler=train_sampler, num_workers=8, drop_last=True)
 
     inputs, targets = next(data_loader.__iter__())

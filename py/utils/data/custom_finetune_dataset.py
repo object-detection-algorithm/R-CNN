@@ -117,7 +117,7 @@ class CustomFinetuneDataset(Dataset):
 
 def test(idx):
     root_dir = '../../data/finetune_car/train'
-    train_data_set = CustomDataset(root_dir)
+    train_data_set = CustomFinetuneDataset(root_dir)
 
     print('positive num: %d' % train_data_set.get_positive_num())
     print('negative num: %d' % train_data_set.get_negative_num())
@@ -144,7 +144,7 @@ def test2():
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    train_data_set = CustomDataset(root_dir, transform=transform)
+    train_data_set = CustomFinetuneDataset(root_dir, transform=transform)
     image, target = train_data_set.__getitem__(530856)
     print('target: %d' % target)
     print('image.shape: ' + str(image.shape))
@@ -159,7 +159,7 @@ def test3():
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    train_data_set = CustomDataset(root_dir, transform=transform)
+    train_data_set = CustomFinetuneDataset(root_dir, transform=transform)
     data_loader = DataLoader(train_data_set, batch_size=128, num_workers=8, drop_last=True)
 
     inputs, targets = next(data_loader.__iter__())

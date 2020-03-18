@@ -19,7 +19,7 @@ import torchvision.transforms as transforms
 from torchvision.models import alexnet
 
 from utils.data.custom_classifier_dataset import CustomClassifierDataset
-from utils.data.custom_sampler import CustomSampler
+from utils.data.custom_batch_sampler import CustomBatchSampler
 from utils.util import check_dir
 from utils.util import save_model
 
@@ -43,7 +43,7 @@ def load_data(data_root_dir):
         data_dir = os.path.join(data_root_dir, name)
 
         data_set = CustomClassifierDataset(data_dir, transform=transform)
-        sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(),
+        sampler = CustomBatchSampler(data_set.get_positive_num(), data_set.get_negative_num(),
                                 batch_positive, batch_negative)
 
         data_loader = DataLoader(data_set, batch_size=batch_total, sampler=sampler, num_workers=8, drop_last=True)
@@ -187,7 +187,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
 
             # 训练完成后，重置负样本，进行hard negatives mining
             data_set.set_negative_list(hard_negative_dict[phase])
-            sampler = CustomSampler(data_set.get_positive_num(), data_set.get_negative_num(),
+            sampler = CustomBatchSampler(data_set.get_positive_num(), data_set.get_negative_num(),
                                     batch_positive, batch_negative)
             data_loaders[phase] = DataLoader(data_set, batch_size=batch_total, sampler=sampler,
                                              num_workers=8, drop_last=True)
