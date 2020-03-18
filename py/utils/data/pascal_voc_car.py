@@ -2,7 +2,7 @@
 
 """
 @date: 2020/2/29 下午2:43
-@file: voc_car.py
+@file: pascal_voc_car.py
 @author: zj
 @description: 从PASCAL VOC 2007数据集中抽取类别Car。保留1/10的数目
 """

@@ -2,7 +2,7 @@
 
 """
 @date: 2020/2/29 下午7:22
-@file: dataset_finetune.py
+@file: create_finetune_data.py
 @author: zj
 @description: 创建微调数据集
 """
