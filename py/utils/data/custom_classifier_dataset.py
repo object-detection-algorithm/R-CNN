@@ -115,11 +115,23 @@ class CustomClassifierDataset(Dataset):
     def __len__(self) -> int:
         return len(self.positive_list) + len(self.negative_list)
 
+    def get_transform(self):
+        return self.transform
+
+    def get_jpeg_images(self) -> list:
+        return self.jpeg_images
+
     def get_positive_num(self) -> int:
         return len(self.positive_list)
 
     def get_negative_num(self) -> int:
         return len(self.negative_list)
+
+    def get_positives(self) -> list:
+        return self.positive_list
+
+    def get_negatives(self) -> list:
+        return self.negative_list
 
     # 用于hard negative mining
     # 替换负样本
