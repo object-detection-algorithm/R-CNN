@@ -98,10 +98,10 @@ def add_hard_negatives(hard_negative_list, negative_list, add_negative_list):
         if add_negative_list is None:
             # 第一次添加负样本
             negative_list.append(item)
-            add_negative_list.append(list(item['rect']))
+            add_negative_list.append(item['rect'])
         if item['rect'] not in add_negative_list:
             negative_list.append(item)
-            add_negative_list.append(list(item['rect'])
+            add_negative_list.append(item['rect'])
 
 
 def get_hard_negatives(preds, cache_dicts):
