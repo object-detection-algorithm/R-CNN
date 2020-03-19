@@ -93,7 +93,15 @@ def hinge_loss(outputs, labels):
     return loss
 
 
-def add_hard_negatives(preds, cache_dicts):
+def add_hard_negatives(target_list, negative_list):
+    for item in target_list:
+        if item not in negative_list:
+            negative_list.append(item)
+
+    return negative_list
+
+
+def get_hard_negatives(preds, cache_dicts):
     fp_mask = preds == 1
     tn_mask = preds == 0
 
@@ -201,10 +209,8 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                     # print(outputs.shape)
                     _, preds = torch.max(outputs, 1)
 
-                    hard_negative_list, easy_neagtive_list = add_hard_negatives(preds.cpu().numpy(), cache_dicts)
-
-                    negative_list.extend(hard_negative_list)
-                    res_negative_list.extend(easy_neagtive_list)
+                    hard_negative_list, easy_neagtive_list = get_hard_negatives(preds.cpu().numpy(), cache_dicts)
+                    negative_list = add_hard_negatives(hard_negative_list, negative_list)
 
                 # 训练完成后，重置负样本，进行hard negatives mining
                 train_dataset.set_negative_list(negative_list)
@@ -214,8 +220,6 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                                                    num_workers=8, drop_last=True)
                 # 重置数据集大小
                 data_sizes['train'] = len(tmp_sampler)
-                # 保存剩余的负样本集
-                data_loaders['remain'] = res_negative_list
 
         # 每训练一轮就保存
         save_model(model, 'models/linear_svm_alexnet_car_%d.pth' % epoch)
