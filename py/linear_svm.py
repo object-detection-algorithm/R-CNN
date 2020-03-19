@@ -97,11 +97,11 @@ def add_hard_negatives(preds, cache_dicts):
     fp_mask = preds == 1
     tn_mask = preds == 0
 
-    fp_rects = cache_dicts['rect'][fp_mask]
-    fp_image_ids = cache_dicts['image_id'][fp_mask]
+    fp_rects = cache_dicts['rect'][fp_mask].numpy()
+    fp_image_ids = cache_dicts['image_id'][fp_mask].numpy()
 
-    tn_rects = cache_dicts['rect'][tn_mask]
-    tn_image_ids = cache_dicts['image_id'][tn_mask]
+    tn_rects = cache_dicts['rect'][tn_mask].numpy()
+    tn_image_ids = cache_dicts['image_id'][tn_mask].numpy()
 
     hard_negative_list = [{'rect': fp_rects[idx], 'image_id': fp_image_ids[idx]} for idx in range(len(fp_rects))]
     easy_negatie_list = [{'rect': tn_rects[idx], 'image_id': tn_image_ids[idx]} for idx in range(len(tn_rects))]
