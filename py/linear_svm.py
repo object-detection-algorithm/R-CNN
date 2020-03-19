@@ -196,7 +196,8 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
 
                 # 获取训练数据集的负样本集
                 negative_list = train_dataset.get_negatives()
-                res_negative_list = list()
+
+                running_corrects = 0
                 # Iterate over data.
                 for inputs, labels, cache_dicts in remain_data_loader:
                     inputs = inputs.to(device)
@@ -209,8 +210,13 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                     # print(outputs.shape)
                     _, preds = torch.max(outputs, 1)
 
+                    running_corrects += torch.sum(preds == labels.data)
+
                     hard_negative_list, easy_neagtive_list = get_hard_negatives(preds.cpu().numpy(), cache_dicts)
                     negative_list = add_hard_negatives(hard_negative_list, negative_list)
+
+                remain_acc = running_corrects.double() / data_sizes[phase]
+                print('remain acc: {:.4f}'.format(remain_acc))
 
                 # 训练完成后，重置负样本，进行hard negatives mining
                 train_dataset.set_negative_list(negative_list)
