@@ -187,7 +187,6 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
         jpeg_images = train_dataset.get_jpeg_images()
         transform = train_dataset.get_transform()
 
-        print('remian_negative_list: %d' % (len(remain_negative_list)))
         # 如果剩余的负样本集小于96个，那么结束hard negative mining
         if len(remain_negative_list) > batch_negative:
             with torch.set_grad_enabled(False):
@@ -216,7 +215,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                     negative_list = add_hard_negatives(hard_negative_list, negative_list)
 
                 remain_acc = running_corrects.double() / data_sizes[phase]
-                print('remain acc: {:.4f}'.format(remain_acc))
+                print('remiam negative size: {}, acc: {:.4f}'.format(len(remain_negative_list), remain_acc))
 
                 # 训练完成后，重置负样本，进行hard negatives mining
                 train_dataset.set_negative_list(negative_list)
