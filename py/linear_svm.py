@@ -93,28 +93,20 @@ def hinge_loss(outputs, labels):
     return loss
 
 
-def add_hard_negative(fp_mask, cache_dicts, hard_negative_list, phase='train'):
+def add_hard_negatives(preds, cache_dicts):
+    fp_mask = preds == 1
+    tn_mask = preds == 0
+
     fp_rects = cache_dicts['rect'][fp_mask]
     fp_image_ids = cache_dicts['image_id'][fp_mask]
-    # fp_image_name = cache_dicts['image_name'][fp_mask]
 
-    for i in range(len(fp_rects)):
-        # 创建误认为正样本的负样本
-        fp_dict = dict()
-        fp_dict['rect'] = fp_rects[i].numpy()
-        fp_dict['image_id'] = fp_image_ids[i].item()
-        # fp_dict['image_name'] = fp_image_name[i]
+    tn_rects = cache_dicts['rect'][tn_mask]
+    tn_image_ids = cache_dicts['image_id'][tn_mask]
 
-        # 如果已存在，那么不添加
-        is_exist = False
-        for hard_negative_dict in hard_negative_list:
-            if (hard_negative_dict['image_id'] == fp_dict['image_id']) and \
-                    (np.sum(hard_negative_dict['rect'] == fp_dict['rect']) == 4):
-                is_exist = True
-        if not is_exist:
-            hard_negative_list.append(fp_dict)
+    hard_negative_list = [{'rect': fp_rects[idx], 'image_id': fp_image_ids[idx]} for idx in range(len(fp_rects))]
+    easy_negatie_list = [{'rect': tn_rects[idx], 'image_id': tn_image_ids[idx]} for idx in range(len(tn_rects))]
 
-    return hard_negative_list
+    return hard_negative_list, easy_negatie_list
 
 
 def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epochs=25, device=None):
@@ -128,94 +120,101 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
-        # # Each epoch has a training and validation phase
-        # for phase in ['train', 'val']:
-        #     if phase == 'train':
-        #         model.train()  # Set model to training mode
-        #     else:
-        #         model.eval()  # Set model to evaluate mode
-        #
-        #     running_loss = 0.0
-        #     running_corrects = 0
-        #
-        #     # 输出正负样本数
-        #     data_set = data_loaders[phase].dataset
-        #     print('{} - positive_num: {} - negative_num: {} - total size: {}'.format(
-        #         phase, data_set.get_positive_num(), data_set.get_negative_num(), data_sizes[phase]))
-        #
-        #     # Iterate over data.
-        #     for inputs, labels, cache_dicts in data_loaders[phase]:
-        #         inputs = inputs.to(device)
-        #         labels = labels.to(device)
-        #
-        #         # zero the parameter gradients
-        #         optimizer.zero_grad()
-        #
-        #         # forward
-        #         # track history if only in train
-        #         with torch.set_grad_enabled(phase == 'train'):
-        #             outputs = model(inputs)
-        #             # print(outputs.shape)
-        #             _, preds = torch.max(outputs, 1)
-        #             loss = criterion(outputs, labels)
-        #
-        #             # backward + optimize only if in training phase
-        #             if phase == 'train':
-        #                 loss.backward()
-        #                 optimizer.step()
-        #
-        #         # statistics
-        #         running_loss += loss.item() * inputs.size(0)
-        #         running_corrects += torch.sum(preds == labels.data)
-        #     if phase == 'train':
-        #         lr_scheduler.step()
-        #
-        #     epoch_loss = running_loss / data_sizes[phase]
-        #     epoch_acc = running_corrects.double() / data_sizes[phase]
-        #
-        #     print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-        #         phase, epoch_loss, epoch_acc))
-        #
-        #     # deep copy the model
-        #     if phase == 'val' and epoch_acc > best_acc:
-        #         best_acc = epoch_acc
-        #         best_model_weights = copy.deepcopy(model.state_dict())
+        # Each epoch has a training and validation phase
+        for phase in ['train', 'val']:
+            if phase == 'train':
+                model.train()  # Set model to training mode
+            else:
+                model.eval()  # Set model to evaluate mode
+
+            running_loss = 0.0
+            running_corrects = 0
+
+            # 输出正负样本数
+            data_set = data_loaders[phase].dataset
+            print('{} - positive_num: {} - negative_num: {} - data size: {}'.format(
+                phase, data_set.get_positive_num(), data_set.get_negative_num(), data_sizes[phase]))
+
+            # Iterate over data.
+            for inputs, labels, cache_dicts in data_loaders[phase]:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward
+                # track history if only in train
+                with torch.set_grad_enabled(phase == 'train'):
+                    outputs = model(inputs)
+                    # print(outputs.shape)
+                    _, preds = torch.max(outputs, 1)
+                    loss = criterion(outputs, labels)
+
+                    # backward + optimize only if in training phase
+                    if phase == 'train':
+                        loss.backward()
+                        optimizer.step()
+
+                # statistics
+                running_loss += loss.item() * inputs.size(0)
+                running_corrects += torch.sum(preds == labels.data)
+            if phase == 'train':
+                lr_scheduler.step()
+
+            epoch_loss = running_loss / data_sizes[phase]
+            epoch_acc = running_corrects.double() / data_sizes[phase]
+
+            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+                phase, epoch_loss, epoch_acc))
+
+            # deep copy the model
+            if phase == 'val' and epoch_acc > best_acc:
+                best_acc = epoch_acc
+                best_model_weights = copy.deepcopy(model.state_dict())
 
         # 每一轮训练完成后，测试剩余负样本集，进行hard negative mining
+        train_dataset = data_loaders['train'].dataset
         remain_negative_list = data_loaders['remain']
-        jpeg_images = data_loaders['train'].dataset.get_jpeg_images()
-        transform = data_loaders['train'].dataset.get_transform()
+        jpeg_images = train_dataset.get_jpeg_images()
+        transform = train_dataset.get_transform()
 
-        remain_dataset = CustomHardNegativeMiningDataset(remain_negative_list, jpeg_images, transform)
-        remain_data_loader = DataLoader(remain_dataset, batch_size=batch_total, num_workers=8, drop_last=True)
+        print('remian_negative_list: %d' % (len(remain_negative_list)))
+        # 如果剩余的负样本集小于96个，那么结束hard negative mining
+        if len(remain_negative_list) > batch_negative:
+            remain_dataset = CustomHardNegativeMiningDataset(remain_negative_list, jpeg_images, transform=transform)
+            remain_data_loader = DataLoader(remain_dataset, batch_size=batch_total, num_workers=8, drop_last=True)
 
-        # 获取训练数据集的负样本集
-        negative_list = data_loaders['train'].dataset.get_negatives()
-        # Iterate over data.
-        for inputs, labels, cache_dicts in remain_data_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
+            # 获取训练数据集的负样本集
+            negative_list = train_dataset.get_negatives()
+            res_negative_list = list()
+            # Iterate over data.
+            for inputs, labels, cache_dicts in remain_data_loader:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
 
-            # zero the parameter gradients
-            optimizer.zero_grad()
+                # zero the parameter gradients
+                optimizer.zero_grad()
 
-            outputs = model(inputs)
-            # print(outputs.shape)
-            _, preds = torch.max(outputs, 1)
+                outputs = model(inputs)
+                # print(outputs.shape)
+                _, preds = torch.max(outputs, 1)
 
-            fp_mask = (labels == 0) & (preds == 1)
-            # add_hard_negative(fp_mask, cache_dicts, )
+                hard_negative_list, easy_neagtive_list = add_hard_negatives(preds.numpy(), cache_dicts)
 
-            print(fp_mask)
+                negative_list.extend(hard_negative_list)
+                res_negative_list.extend(easy_neagtive_list)
 
-        # # 训练完成后，重置负样本，进行hard negatives mining
-        # data_set.set_negative_list(hard_negative_dict[phase])
-        # sampler = CustomBatchSampler(data_set.get_positive_num(), data_set.get_negative_num(),
-        #                              batch_positive, batch_negative)
-        # data_loaders[phase] = DataLoader(data_set, batch_size=batch_total, sampler=sampler,
-        #                                  num_workers=8, drop_last=True)
-        # # 重置数据集大小
-        # data_sizes[phase] = len(sampler)
+            # 训练完成后，重置负样本，进行hard negatives mining
+            train_dataset.set_negative_list(negative_list)
+            tmp_sampler = CustomBatchSampler(train_dataset.get_positive_num(), train_dataset.get_negative_num(),
+                                             batch_positive, batch_negative)
+            data_loaders['train'] = DataLoader(train_dataset, batch_size=batch_total, sampler=tmp_sampler,
+                                               num_workers=8, drop_last=True)
+            # 重置数据集大小
+            data_sizes['train'] = len(tmp_sampler)
+            # 保存剩余的负样本集
+            data_loaders['remain'] = res_negative_list
 
         # 每训练一轮就保存
         save_model(model, 'models/linear_svm_alexnet_car_%d.pth' % epoch)
@@ -231,8 +230,8 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    # device = 'cpu'
+    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = 'cpu'
 
     data_loaders, data_sizes = load_data('./data/classifier_car')
 
@@ -242,7 +241,7 @@ if __name__ == '__main__':
     num_classes = 2
     num_features = model.classifier[6].in_features
     model.classifier[6] = nn.Linear(num_features, num_classes)
-    # model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path))
     model.eval()
     # 固定特征提取
     for param in model.parameters():
@@ -251,35 +250,6 @@ if __name__ == '__main__':
     model.classifier[6] = nn.Linear(num_features, num_classes)
     # print(model)
     model = model.to(device)
-
-    # 每一轮训练完成后，测试剩余负样本集，进行hard negative mining
-    remain_negative_list = data_loaders['remain']
-    jpeg_images = data_loaders['train'].dataset.get_jpeg_images()
-    transform = data_loaders['train'].dataset.get_transform()
-
-    remain_dataset = CustomHardNegativeMiningDataset(remain_negative_list, jpeg_images, transform)
-    remain_data_loader = DataLoader(remain_dataset, batch_size=batch_total, num_workers=8, drop_last=True)
-
-    # 获取训练数据集的负样本集
-    negative_list = data_loaders['train'].dataset.get_negatives()
-    # Iterate over data.
-    for inputs, labels, cache_dicts in remain_data_loader:
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-
-        # zero the parameter gradients
-        # optimizer.zero_grad()
-
-        outputs = model(inputs)
-        # print(outputs.shape)
-        _, preds = torch.max(outputs, 1)
-
-        fp_mask = (labels == 0) & (preds == 1)
-        # add_hard_negative(fp_mask, cache_dicts, )
-
-        print(fp_mask)
-        exit(0)
-
 
     criterion = hinge_loss
     optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)
