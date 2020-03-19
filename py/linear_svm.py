@@ -200,7 +200,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                 # print(outputs.shape)
                 _, preds = torch.max(outputs, 1)
 
-                hard_negative_list, easy_neagtive_list = add_hard_negatives(preds.numpy(), cache_dicts)
+                hard_negative_list, easy_neagtive_list = add_hard_negatives(preds.cpu().numpy(), cache_dicts)
 
                 negative_list.extend(hard_negative_list)
                 res_negative_list.extend(easy_neagtive_list)
@@ -230,8 +230,8 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
 
 
 if __name__ == '__main__':
-    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    device = 'cpu'
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    # device = 'cpu'
 
     data_loaders, data_sizes = load_data('./data/classifier_car')
 
