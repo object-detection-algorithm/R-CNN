@@ -93,12 +93,15 @@ def hinge_loss(outputs, labels):
     return loss
 
 
-def add_hard_negatives(target_list, negative_list):
-    for item in target_list:
-        if item not in negative_list:
+def add_hard_negatives(hard_negative_list, negative_list, add_negative_list):
+    for item in hard_negative_list:
+        if add_negative_list is None:
+            # 第一次添加负样本
             negative_list.append(item)
-
-    return negative_list
+            add_negative_list.append(list(item['rect']))
+        if item['rect'] not in add_negative_list:
+            negative_list.append(item)
+            add_negative_list.append(list(item['rect'])
 
 
 def get_hard_negatives(preds, cache_dicts):
@@ -195,6 +198,8 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
 
                 # 获取训练数据集的负样本集
                 negative_list = train_dataset.get_negatives()
+                # 记录后续增加的负样本
+                add_negative_list = data_loaders['add_negative']
 
                 running_corrects = 0
                 # Iterate over data.
@@ -212,7 +217,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                     running_corrects += torch.sum(preds == labels.data)
 
                     hard_negative_list, easy_neagtive_list = get_hard_negatives(preds.cpu().numpy(), cache_dicts)
-                    negative_list = add_hard_negatives(hard_negative_list, negative_list)
+                    add_hard_negatives(hard_negative_list, negative_list, add_negative_list)
 
                 remain_acc = running_corrects.double() / data_sizes[phase]
                 print('remiam negative size: {}, acc: {:.4f}'.format(len(remain_negative_list), remain_acc))
@@ -223,6 +228,7 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
                                                  batch_positive, batch_negative)
                 data_loaders['train'] = DataLoader(train_dataset, batch_size=batch_total, sampler=tmp_sampler,
                                                    num_workers=8, drop_last=True)
+                data_loaders['add_negative'] = add_negative_list
                 # 重置数据集大小
                 data_sizes['train'] = len(tmp_sampler)
 
