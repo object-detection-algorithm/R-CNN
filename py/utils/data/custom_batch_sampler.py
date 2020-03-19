@@ -57,8 +57,8 @@ class CustomBatchSampler(Sampler):
 
 def test():
     root_dir = '../../data/finetune_car/train'
-    train_data_set = CustomDataset(root_dir)
-    train_sampler = CustomSampler(train_data_set.get_positive_num(), train_data_set.get_negative_num(), 32, 96)
+    train_data_set = CustomFinetuneDataset(root_dir)
+    train_sampler = CustomBatchSampler(train_data_set.get_positive_num(), train_data_set.get_negative_num(), 32, 96)
 
     print('sampler len: %d' % train_sampler.__len__())
     print('sampler batch num: %d' % train_sampler.get_num_batch())
@@ -69,7 +69,7 @@ def test():
     print('positive batch: %d' % np.sum(np.array(first_idx_list) < 66517))
 
 
-if __name__ == '__main__':
+def test2():
     root_dir = '../../data/finetune_car/train'
     transform = transforms.Compose([
         transforms.ToPILImage(),
@@ -85,3 +85,7 @@ if __name__ == '__main__':
     inputs, targets = next(data_loader.__iter__())
     print(targets)
     print(inputs.shape)
+
+
+if __name__ == '__main__':
+    test()
