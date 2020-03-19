@@ -182,39 +182,40 @@ def train_model(data_loaders, model, criterion, optimizer, lr_scheduler, num_epo
         print('remian_negative_list: %d' % (len(remain_negative_list)))
         # 如果剩余的负样本集小于96个，那么结束hard negative mining
         if len(remain_negative_list) > batch_negative:
-            remain_dataset = CustomHardNegativeMiningDataset(remain_negative_list, jpeg_images, transform=transform)
-            remain_data_loader = DataLoader(remain_dataset, batch_size=batch_total, num_workers=8, drop_last=True)
+            with torch.set_grad_enabled(False):
+                remain_dataset = CustomHardNegativeMiningDataset(remain_negative_list, jpeg_images, transform=transform)
+                remain_data_loader = DataLoader(remain_dataset, batch_size=batch_total, num_workers=8, drop_last=True)
 
-            # 获取训练数据集的负样本集
-            negative_list = train_dataset.get_negatives()
-            res_negative_list = list()
-            # Iterate over data.
-            for inputs, labels, cache_dicts in remain_data_loader:
-                inputs = inputs.to(device)
-                labels = labels.to(device)
+                # 获取训练数据集的负样本集
+                negative_list = train_dataset.get_negatives()
+                res_negative_list = list()
+                # Iterate over data.
+                for inputs, labels, cache_dicts in remain_data_loader:
+                    inputs = inputs.to(device)
+                    labels = labels.to(device)
 
-                # zero the parameter gradients
-                optimizer.zero_grad()
+                    # zero the parameter gradients
+                    optimizer.zero_grad()
 
-                outputs = model(inputs)
-                # print(outputs.shape)
-                _, preds = torch.max(outputs, 1)
+                    outputs = model(inputs)
+                    # print(outputs.shape)
+                    _, preds = torch.max(outputs, 1)
 
-                hard_negative_list, easy_neagtive_list = add_hard_negatives(preds.cpu().numpy(), cache_dicts)
+                    hard_negative_list, easy_neagtive_list = add_hard_negatives(preds.cpu().numpy(), cache_dicts)
 
-                negative_list.extend(hard_negative_list)
-                res_negative_list.extend(easy_neagtive_list)
+                    negative_list.extend(hard_negative_list)
+                    res_negative_list.extend(easy_neagtive_list)
 
-            # 训练完成后，重置负样本，进行hard negatives mining
-            train_dataset.set_negative_list(negative_list)
-            tmp_sampler = CustomBatchSampler(train_dataset.get_positive_num(), train_dataset.get_negative_num(),
-                                             batch_positive, batch_negative)
-            data_loaders['train'] = DataLoader(train_dataset, batch_size=batch_total, sampler=tmp_sampler,
-                                               num_workers=8, drop_last=True)
-            # 重置数据集大小
-            data_sizes['train'] = len(tmp_sampler)
-            # 保存剩余的负样本集
-            data_loaders['remain'] = res_negative_list
+                # 训练完成后，重置负样本，进行hard negatives mining
+                train_dataset.set_negative_list(negative_list)
+                tmp_sampler = CustomBatchSampler(train_dataset.get_positive_num(), train_dataset.get_negative_num(),
+                                                 batch_positive, batch_negative)
+                data_loaders['train'] = DataLoader(train_dataset, batch_size=batch_total, sampler=tmp_sampler,
+                                                   num_workers=8, drop_last=True)
+                # 重置数据集大小
+                data_sizes['train'] = len(tmp_sampler)
+                # 保存剩余的负样本集
+                data_loaders['remain'] = res_negative_list
 
         # 每训练一轮就保存
         save_model(model, 'models/linear_svm_alexnet_car_%d.pth' % epoch)
