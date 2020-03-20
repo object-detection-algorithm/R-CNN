@@ -49,12 +49,12 @@ def load_data(data_root_dir):
         if name is 'train':
             """
             使用hard negative mining方式
-            初始正负样本比例为1:3，由于正样本数远小于负样本，所以以正样本数为基准，在负样本集中随机提取3倍的负样本作为初始负样本集
+            初始正负样本比例为1:1。由于正样本数远小于负样本，所以以正样本数为基准，在负样本集中随机提取同样数目负样本作为初始负样本集
             """
             positive_list = data_set.get_positives()
             negative_list = data_set.get_negatives()
 
-            init_negative_idxs = random.sample(range(len(negative_list)), len(positive_list) * 3)
+            init_negative_idxs = random.sample(range(len(negative_list)), len(positive_list))
             init_negative_list = [negative_list[idx] for idx in range(len(negative_list)) if idx in init_negative_idxs]
             remain_negative_list = [negative_list[idx] for idx in range(len(negative_list))
                                     if idx not in init_negative_idxs]
@@ -266,9 +266,11 @@ if __name__ == '__main__':
     model = model.to(device)
 
     criterion = hinge_loss
-    optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)
-    lr_schduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+    # 由于初始训练集数量很少，所以降低学习率
+    optimizer = optim.SGD(model.parameters(), lr=1e-4, momentum=0.9)
+    # 共训练10轮，每隔4论减少一次学习率
+    lr_schduler = optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.1)
 
-    best_model = train_model(data_loaders, model, criterion, optimizer, lr_schduler, num_epochs=25, device=device)
+    best_model = train_model(data_loaders, model, criterion, optimizer, lr_schduler, num_epochs=10, device=device)
     # 保存最好的模型参数
     save_model(best_model, 'models/best_linear_svm_alexnet_car.pth')
