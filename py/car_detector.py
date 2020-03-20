@@ -39,7 +39,8 @@ def get_model(device=None):
     num_classes = 2
     num_features = model.classifier[6].in_features
     model.classifier[6] = nn.Linear(num_features, num_classes)
-    model.load_state_dict(torch.load('./models/linear_svm_alexnet_car_4.pth'))
+    # model.load_state_dict(torch.load('./models/linear_svm_alexnet_car_4.pth'))
+    model.load_state_dict(torch.load('./models/best_linear_svm_alexnet_car.pth'))
     model.eval()
 
     # 取消梯度追踪
@@ -49,6 +50,22 @@ def get_model(device=None):
         model = model.to(device)
 
     return model
+
+
+def draw_box_with_text(img, rect_list, score_list):
+    """
+    绘制边框及其分类概率
+    :param img:
+    :param rect_list:
+    :param score_list:
+    :return:
+    """
+    for i in range(len(rect_list)):
+        xmin, ymin, xmax, ymax = rect_list[i]
+        score = score_list[i]
+
+        cv2.rectangle(img, (xmin, ymin), (xmax, ymax), color=(0, 0, 255), thickness=1)
+        cv2.putText(img, "{:.3f}".format(score), (xmin, ymin), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
 
 if __name__ == '__main__':
@@ -68,13 +85,18 @@ if __name__ == '__main__':
     bndboxs = parse_xml(test_xml_path)
     for bndbox in bndboxs:
         xmin, ymin, xmax, ymax = bndbox
-        cv2.rectangle(dst, (xmin, ymin), (xmax, ymax), color=(0, 255, 0), thickness=2)
+        cv2.rectangle(dst, (xmin, ymin), (xmax, ymax), color=(0, 255, 0), thickness=1)
 
     # 候选区域建议
     selectivesearch.config(gs, img, strategy='f')
     rects = selectivesearch.get_rects(gs)
     print('候选区域建议数目： %d' % len(rects))
 
+    # softmax = torch.softmax()
+
+    # 保存正样本边界框以及
+    score_list = list()
+    positive_list = list()
     for rect in rects:
         xmin, ymin, xmax, ymax = rect
         rect_img = img[ymin:ymax, xmin:xmax]
@@ -86,8 +108,14 @@ if __name__ == '__main__':
             """
             预测为汽车
             """
-            cv2.rectangle(dst, (xmin, ymin), (xmax, ymax), color=(0, 0, 255), thickness=2)
-            print(rect, output)
+            probs = torch.softmax(output, dim=0).cpu().numpy()
+
+            score_list.append(probs[1])
+            positive_list.append(rect)
+            # cv2.rectangle(dst, (xmin, ymin), (xmax, ymax), color=(0, 0, 255), thickness=2)
+            print(rect, output, probs)
+
+    draw_box_with_text(dst, positive_list, score_list)
 
     cv2.imshow('img', dst)
     cv2.waitKey(0)
