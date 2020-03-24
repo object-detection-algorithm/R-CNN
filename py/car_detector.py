@@ -9,12 +9,14 @@
 
 import copy
 import cv2
+import numpy as np
 import torch
 import torch.nn as nn
 from torchvision.models import alexnet
 import torchvision.transforms as transforms
 import selectivesearch
-from utils.util import parse_xml
+
+import utils.util as util
 
 
 def get_device():
@@ -39,7 +41,6 @@ def get_model(device=None):
     num_classes = 2
     num_features = model.classifier[6].in_features
     model.classifier[6] = nn.Linear(num_features, num_classes)
-    # model.load_state_dict(torch.load('./models/linear_svm_alexnet_car_4.pth'))
     model.load_state_dict(torch.load('./models/best_linear_svm_alexnet_car.pth'))
     model.eval()
 
@@ -68,6 +69,45 @@ def draw_box_with_text(img, rect_list, score_list):
         cv2.putText(img, "{:.3f}".format(score), (xmin, ymin), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
 
+def nms(rect_list, score_list):
+    """
+    非最大抑制
+    """
+    nms_rects = list()
+    nms_scores = list()
+
+    rect_array = np.array(rect_list)
+    score_array = np.array(score_list)
+
+    # 一次排序后即可
+    # 按分类概率从大到小排序
+    idxs = np.argsort(score_array)[::-1]
+    rect_array = rect_array[idxs]
+    score_array = score_array[idxs]
+
+    thresh = 0.3
+    while len(score_array) > 0:
+        # 添加分类概率最大的边界框
+        nms_rects.append(rect_array[0])
+        nms_scores.append(score_array[0])
+        rect_array = rect_array[1:]
+        score_array = score_array[1:]
+
+        length = len(score_array)
+        if length <= 0:
+            break
+
+        # 计算IoU
+        iou_scores = util.iou(np.array(nms_rects[len(nms_rects) - 1]), rect_array)
+        # print(iou_scores)
+        # 去除重叠率大于等于thresh的边界框
+        idxs = np.where(iou_scores < thresh)[0]
+        rect_array = rect_array[idxs]
+        score_array = score_array[idxs]
+
+    return nms_rects, nms_scores
+
+
 if __name__ == '__main__':
     device = get_device()
     transform = get_transform()
@@ -76,13 +116,15 @@ if __name__ == '__main__':
     # 创建selectivesearch对象
     gs = selectivesearch.get_selective_search()
 
-    test_img_path = './data/voc_car/val/JPEGImages/000007.jpg'
-    test_xml_path = './data/voc_car/val/Annotations/000007.xml'
+    # test_img_path = '../imgs/000007.jpg'
+    # test_xml_path = '../imgs/000007.xml'
+    test_img_path = '../imgs/000012.jpg'
+    test_xml_path = '../imgs/000012.xml'
 
     img = cv2.imread(test_img_path)
     dst = copy.deepcopy(img)
 
-    bndboxs = parse_xml(test_xml_path)
+    bndboxs = util.parse_xml(test_xml_path)
     for bndbox in bndboxs:
         xmin, ymin, xmax, ymax = bndbox
         cv2.rectangle(dst, (xmin, ymin), (xmax, ymax), color=(0, 255, 0), thickness=1)
@@ -93,6 +135,8 @@ if __name__ == '__main__':
     print('候选区域建议数目： %d' % len(rects))
 
     # softmax = torch.softmax()
+
+    svm_thresh = 0.60
 
     # 保存正样本边界框以及
     score_list = list()
@@ -110,12 +154,16 @@ if __name__ == '__main__':
             """
             probs = torch.softmax(output, dim=0).cpu().numpy()
 
-            score_list.append(probs[1])
-            positive_list.append(rect)
-            # cv2.rectangle(dst, (xmin, ymin), (xmax, ymax), color=(0, 0, 255), thickness=2)
-            print(rect, output, probs)
+            if probs[1] >= svm_thresh:
+                score_list.append(probs[1])
+                positive_list.append(rect)
+                # cv2.rectangle(dst, (xmin, ymin), (xmax, ymax), color=(0, 0, 255), thickness=2)
+                print(rect, output, probs)
 
-    draw_box_with_text(dst, positive_list, score_list)
+    nms_rects, nms_scores = nms(positive_list, score_list)
+    print(nms_rects)
+    print(nms_scores)
+    draw_box_with_text(dst, nms_rects, nms_scores)
 
     cv2.imshow('img', dst)
     cv2.waitKey(0)
