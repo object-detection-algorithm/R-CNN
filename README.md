@@ -54,6 +54,15 @@ $ pip install mkdocs
     ```
     启动本地服务器后即可登录浏览器`localhost:8000`
 
+## python实现
+
+```
+$ cd py/
+$ python car_detector.py
+```
+
+![](./imgs/car-detector.gif)
+
 ## 主要维护人员
 
 * zhujian - *Initial work* - [zjZSTU](https://github.com/zjZSTU)
