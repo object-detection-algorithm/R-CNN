@@ -2,6 +2,8 @@
 
 文章[Rich feature hierarchies for accurate object detection and semantic segmentation](https://arxiv.org/abs/1311.2524)提出的算法`R-CNN`将`CNN`应用于目标检测领域，在当时取得了非常好的效果
 
+![](./imgs/figure-1.png)
+
 ## 工程流程
 
 本文档实现了`R-CNN`算法进行目标检测的完整过程，包括
@@ -19,3 +21,7 @@
 4. 非最大抑制方法实现，得到最终的候选建议
 
 *关于区域建议算法`selectivesearch`实现，在训练阶段使用高质量模式，在测试阶段使用快速模式*
+
+## 相关链接
+
+* [R-CNN](https://blog.zhujian.life/posts/5beb21d0.html)
