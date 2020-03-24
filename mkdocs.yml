@@ -31,6 +31,7 @@ extra_javascript:
 nav:
     - Home: index.md
     - 工程解析: './工程解析.md'
+    - 数据集创建: './数据集创建.md'
     - '算法解析': './算法解析.md'
     - '数据集':
         - '创建': './create_data.md'
