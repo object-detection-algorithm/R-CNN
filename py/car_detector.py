@@ -72,6 +72,8 @@ def draw_box_with_text(img, rect_list, score_list):
 def nms(rect_list, score_list):
     """
     非最大抑制
+    :param rect_list: list，大小为[N, 4]
+    :param score_list： list，大小为[N]
     """
     nms_rects = list()
     nms_scores = list()
@@ -141,6 +143,9 @@ if __name__ == '__main__':
     # 保存正样本边界框以及
     score_list = list()
     positive_list = list()
+
+    # tmp_score_list = list()
+    # tmp_positive_list = list()
     for rect in rects:
         xmin, ymin, xmax, ymax = rect
         rect_img = img[ymin:ymax, xmin:xmax]
@@ -154,11 +159,22 @@ if __name__ == '__main__':
             """
             probs = torch.softmax(output, dim=0).cpu().numpy()
 
+            # tmp_score_list.append(probs[1])
+            # tmp_positive_list.append(rect)
+
             if probs[1] >= svm_thresh:
                 score_list.append(probs[1])
                 positive_list.append(rect)
                 # cv2.rectangle(dst, (xmin, ymin), (xmax, ymax), color=(0, 0, 255), thickness=2)
                 print(rect, output, probs)
+
+    # tmp_img2 = copy.deepcopy(dst)
+    # draw_box_with_text(tmp_img2, tmp_positive_list, tmp_score_list)
+    # cv2.imshow('tmp', tmp_img2)
+    #
+    # tmp_img = copy.deepcopy(dst)
+    # draw_box_with_text(tmp_img, positive_list, score_list)
+    # cv2.imshow('tmp2', tmp_img)
 
     nms_rects, nms_scores = nms(positive_list, score_list)
     print(nms_rects)
