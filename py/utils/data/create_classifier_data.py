@@ -32,7 +32,7 @@ def parse_annotation_jpeg(annotation_path, jpeg_path, gs):
     """
     获取正负样本（注：忽略属性difficult为True的标注边界框）
     正样本：标注边界框
-    负样本：IoU小于等于0.3。为了进一步限制负样本数目，其大小必须大于标注框的1/5
+    负样本：IoU大于0，小于等于0.3。为了进一步限制负样本数目，其大小必须大于标注框的1/5
     """
     img = cv2.imread(jpeg_path)
 
