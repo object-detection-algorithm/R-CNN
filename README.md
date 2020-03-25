@@ -20,6 +20,7 @@
 - [安装](#安装)
 - [用法](#用法)
 - [主要维护人员](#主要维护人员)
+- [致谢](#致谢)
 - [参与贡献方式](#参与贡献方式)
 - [许可证](#许可证)
 
@@ -66,6 +67,24 @@ $ python car_detector.py
 ## 主要维护人员
 
 * zhujian - *Initial work* - [zjZSTU](https://github.com/zjZSTU)
+
+## 致谢
+
+```
+@misc{girshick2013rich,
+    title={Rich feature hierarchies for accurate object detection and semantic segmentation},
+    author={Ross Girshick and Jeff Donahue and Trevor Darrell and Jitendra Malik},
+    year={2013},
+    eprint={1311.2524},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV}
+}
+
+@misc{pascal-voc-2007,
+	author = "Everingham, M. and Van~Gool, L. and Williams, C. K. I. and Winn, J. and Zisserman, A.",
+	title = "The {PASCAL} {V}isual {O}bject {C}lasses {C}hallenge 2007 {(VOC2007)} {R}esults",
+	howpublished = "http://www.pascal-network.org/challenges/VOC/voc2007/workshop/index.html"}
+```
 
 ## 参与贡献方式
 
