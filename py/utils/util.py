@@ -11,6 +11,7 @@ import os
 import numpy as np
 import xmltodict
 import torch
+import matplotlib.pyplot as plt
 
 
 def check_dir(data_dir):
@@ -82,7 +83,17 @@ def compute_ious(rects, bndboxs):
         iou_list.append(max(scores))
     return iou_list
 
+
 def save_model(model, model_save_path):
     # 保存最好的模型参数
     check_dir('./models')
     torch.save(model.state_dict(), model_save_path)
+
+
+def plot_loss(loss_list):
+    x = list(range(len(loss_list)))
+    fg = plt.figure()
+
+    plt.plot(x, loss_list)
+    plt.title('loss')
+    plt.savefig('./loss.png')
