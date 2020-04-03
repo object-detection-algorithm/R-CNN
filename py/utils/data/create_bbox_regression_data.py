@@ -12,9 +12,11 @@ import shutil
 import numpy as np
 import utils.util as util
 
+# 正样本边界框数目：66517
+
 if __name__ == '__main__':
     """
-    从voc_car/train目录中提取标注边界框坐标，从classifier_car/train目录中提取训练集正样本坐标（IoU>=0.5）
+    从voc_car/train目录中提取标注边界框坐标，从finetune_car/train目录中提取训练集正样本坐标（IoU>=0.5）
     数据集保存在bbox_car目录下，其中标注边界框命名为
     """
     voc_car_train_dir = '../../data/voc_car/train'
@@ -22,7 +24,7 @@ if __name__ == '__main__':
     gt_annotation_dir = os.path.join(voc_car_train_dir, 'Annotations')
     jpeg_dir = os.path.join(voc_car_train_dir, 'JPEGImages')
 
-    classifier_car_train_dir = '../../data/classifier_car/train'
+    classifier_car_train_dir = '../../data/finetune_car/train'
     # positive
     positive_annotation_dir = os.path.join(classifier_car_train_dir, 'Annotations')
 
@@ -40,7 +42,7 @@ if __name__ == '__main__':
     res_samples = list()
     for sample_name in samples:
         # 获取正样本边界框坐标
-        positive_annotation_path = os.path.join(positive_annotation_dir, sample_name + '_0.csv')
+        positive_annotation_path = os.path.join(positive_annotation_dir, sample_name + '_1.csv')
         positive_bndboxes = np.loadtxt(positive_annotation_path, dtype=np.int, delimiter=' ')
         # 如果存在正样本边界框（IoU>=0.5），那么保存相应的图片以及标注边界框
         if len(positive_bndboxes) > 0:
