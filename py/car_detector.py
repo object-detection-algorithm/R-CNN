@@ -7,6 +7,7 @@
 @description: 车辆类别检测器
 """
 
+import time
 import copy
 import cv2
 import numpy as np
@@ -111,6 +112,8 @@ def nms(rect_list, score_list):
 
 
 if __name__ == '__main__':
+    start = time.time()
+
     device = get_device()
     transform = get_transform()
     model = get_model(device=device)
@@ -181,5 +184,7 @@ if __name__ == '__main__':
     print(nms_scores)
     draw_box_with_text(dst, nms_rects, nms_scores)
 
+    end = time.time()
+    print('detect time: %d s' % (end - start))
     cv2.imshow('img', dst)
     cv2.waitKey(0)
