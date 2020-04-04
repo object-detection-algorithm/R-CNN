@@ -17,7 +17,7 @@ import utils.util as util
 if __name__ == '__main__':
     """
     从voc_car/train目录中提取标注边界框坐标
-    从finetune_car/train目录中提取训练集正样本坐标（IoU>=0.5），进一步提取IoU>=0.6的边界框
+    从finetune_car/train目录中提取训练集正样本坐标（IoU>=0.5），进一步提取IoU>0.6的边界框
     数据集保存在bbox_car目录下
     """
     voc_car_train_dir = '../../data/voc_car/train'
@@ -49,21 +49,21 @@ if __name__ == '__main__':
         # 提取标注边界框
         gt_annotation_path = os.path.join(gt_annotation_dir, sample_name + '.xml')
         bndboxs = util.parse_xml(gt_annotation_path)
-        # 计算符合条件（IoU>=0.6）的候选建议
+        # 计算符合条件（IoU>0.6）的候选建议
         positive_list = list()
         if len(positive_bndboxes.shape) == 1 and len(positive_bndboxes) != 0:
             scores = util.iou(positive_bndboxes, bndboxs)
-            if np.max(scores) >= 0.6:
+            if np.max(scores) > 0.6:
                 positive_list.append(positive_bndboxes)
         elif len(positive_bndboxes.shape) == 2:
             for positive_bndboxe in positive_bndboxes:
                 scores = util.iou(positive_bndboxe, bndboxs)
-                if np.max(scores) >= 0.6:
+                if np.max(scores) > 0.6:
                     positive_list.append(positive_bndboxe)
         else:
             pass
 
-        # 如果存在正样本边界框（IoU>=0.6），那么保存相应的图片以及标注边界框
+        # 如果存在正样本边界框（IoU>0.6），那么保存相应的图片以及标注边界框
         if len(positive_list) > 0:
             # 保存图片
             jpeg_path = os.path.join(jpeg_dir, sample_name + ".jpg")
