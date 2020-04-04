@@ -62,6 +62,9 @@ def iou(pred_box, target_box):
     :param target_box: 大小为[N, 4]
     :return: [N]
     """
+    if len(target_box.shape) == 1:
+        target_box = target_box[np.newaxis, :]
+
     xA = np.maximum(pred_box[0], target_box[:, 0])
     yA = np.maximum(pred_box[1], target_box[:, 1])
     xB = np.minimum(pred_box[2], target_box[:, 2])
