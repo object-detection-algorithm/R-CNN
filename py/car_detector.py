@@ -112,8 +112,6 @@ def nms(rect_list, score_list):
 
 
 if __name__ == '__main__':
-    start = time.time()
-
     device = get_device()
     transform = get_transform()
     model = get_model(device=device)
@@ -149,6 +147,7 @@ if __name__ == '__main__':
 
     # tmp_score_list = list()
     # tmp_positive_list = list()
+    start = time.time()
     for rect in rects:
         xmin, ymin, xmax, ymax = rect
         rect_img = img[ymin:ymax, xmin:xmax]
@@ -170,6 +169,8 @@ if __name__ == '__main__':
                 positive_list.append(rect)
                 # cv2.rectangle(dst, (xmin, ymin), (xmax, ymax), color=(0, 0, 255), thickness=2)
                 print(rect, output, probs)
+    end = time.time()
+    print('detect time: %d s' % (end - start))
 
     # tmp_img2 = copy.deepcopy(dst)
     # draw_box_with_text(tmp_img2, tmp_positive_list, tmp_score_list)
@@ -184,7 +185,5 @@ if __name__ == '__main__':
     print(nms_scores)
     draw_box_with_text(dst, nms_rects, nms_scores)
 
-    end = time.time()
-    print('detect time: %d s' % (end - start))
     cv2.imshow('img', dst)
     cv2.waitKey(0)
