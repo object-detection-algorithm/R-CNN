@@ -48,9 +48,9 @@ def train_model(data_loader, feature_model, model, criterion, optimizer, lr_sche
         running_loss = 0.0
 
         # Iterate over data.
-        for inputs, bndboxes in data_loader:
+        for inputs, targets in data_loader:
             inputs = inputs.to(device)
-            bndboxes = bndboxes.to(device)
+            targets = targets.to(device)
 
             features = feature_model.features(inputs)
             features = torch.flatten(features, 1)
@@ -60,7 +60,7 @@ def train_model(data_loader, feature_model, model, criterion, optimizer, lr_sche
 
             # forward
             outputs = model(features)
-            loss = criterion(outputs, bndboxes)
+            loss = criterion(outputs, targets)
 
             loss.backward()
             optimizer.step()

@@ -10,6 +10,7 @@
 import os
 import cv2
 import numpy as np
+import torch
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
@@ -53,6 +54,7 @@ class BBoxRegressionDataset(Dataset):
         positive = box_dict['positive']
         bndbox = box_dict['bndbox']
 
+        # 获取预测图像
         jpeg_img = self.jpeg_list[image_id]
         xmin, ymin, xmax, ymax = positive
         image = jpeg_img[ymin:ymax, xmin:xmax]
@@ -60,7 +62,26 @@ class BBoxRegressionDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, bndbox
+        # 计算P/G的x/y/w/h
+        target = dict()
+        p_w = xmax - xmin
+        p_h = ymax - ymin
+        p_x = xmin + p_w / 2
+        p_y = ymin + p_h / 2
+
+        xmin, ymin, xmax, ymax = bndbox
+        g_w = xmax - xmin
+        g_h = ymax - ymin
+        g_x = xmin + g_w / 2
+        g_y = ymin + g_h / 2
+
+        # 计算t
+        t_x = (g_x - p_x) / p_w
+        t_y = (g_y - p_y) / p_h
+        t_w = np.log(g_w / p_w)
+        t_h = np.log(g_h / p_h)
+
+        return image, np.array((t_x, t_y, t_w, t_h))
 
     def __len__(self):
         return len(self.box_list)
@@ -97,9 +118,9 @@ def test():
     data_set = BBoxRegressionDataset(data_root_dir, transform=transform)
 
     print(data_set.__len__())
-    image, bndbox = data_set.__getitem__(10)
+    image, target = data_set.__getitem__(10)
     print(image.shape)
-    print(bndbox)
+    print(target)
 
 
 def test2():
@@ -125,4 +146,5 @@ def test2():
 
 
 if __name__ == '__main__':
-    test()
+    # test()
+    test2()
