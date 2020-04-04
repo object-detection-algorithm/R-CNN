@@ -39,9 +39,13 @@ class BBoxRegressionDataset(Dataset):
             bndboxes = np.loadtxt(bndbox_path, dtype=np.int, delimiter=' ')
             positives = np.loadtxt(positive_path, dtype=np.int, delimiter=' ')
 
-            for positive in positives:
-                bndbox = self.get_bndbox(bndboxes, positive)
-                box_list.append({'image_id': i, 'positive': positive, 'bndbox': bndbox})
+            if len(positives.shape) == 1:
+                bndbox = self.get_bndbox(bndboxes, positives)
+                box_list.append({'image_id': i, 'positive': positives, 'bndbox': bndbox})
+            else:
+                for positive in positives:
+                    bndbox = self.get_bndbox(bndboxes, positive)
+                    box_list.append({'image_id': i, 'positive': positive, 'bndbox': bndbox})
 
         self.jpeg_list = jpeg_list
         self.box_list = box_list
@@ -121,6 +125,7 @@ def test():
     image, target = data_set.__getitem__(10)
     print(image.shape)
     print(target)
+    print(target.dtype)
 
 
 def test2():
@@ -143,8 +148,9 @@ def test2():
     datas, targets = items
     print(datas.shape)
     print(targets.shape)
+    print(targets.dtype)
 
 
 if __name__ == '__main__':
-    # test()
-    test2()
+    test()
+    # test2()
