@@ -49,7 +49,6 @@ def train_model(data_loader, feature_model, model, criterion, optimizer, lr_sche
 
         # Iterate over data.
         for inputs, targets in data_loader:
-            print(targets.dtype)
             inputs = inputs.to(device)
             targets = targets.float().to(device)
 
@@ -114,10 +113,9 @@ if __name__ == '__main__':
     model.to(device)
 
     criterion = nn.MSELoss()
-    # optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-3)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-3)
-    lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
+    lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 
     loss_list = train_model(data_loader, feature_model, model, criterion, optimizer, lr_scheduler, device=device,
-                            num_epochs=25)
+                            num_epochs=12)
     util.plot_loss(loss_list)
