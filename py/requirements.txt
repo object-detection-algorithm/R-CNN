@@ -3,7 +3,7 @@
 
 # utils/data/custom_classifier_dataset.py: 13
 # utils/data/custom_finetune_dataset.py: 13
-Pillow == 6.2.0
+Pillow == 8.2.0
 
 # utils/util.py: 14
 matplotlib == 3.1.2
