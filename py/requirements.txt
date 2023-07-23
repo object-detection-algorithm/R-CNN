@@ -87,7 +87,7 @@ selectivesearch == 0.4
 # utils/data/custom_finetune_dataset.py: 14,15
 # utils/data/custom_hard_negative_mining_dataset.py: 10,11
 # utils/util.py: 13
-torch == 1.4.0
+torch == 1.13.1
 
 # bbox_regression.py: 17,18
 # car_detector.py: 16,17
